@@ -1,0 +1,118 @@
+:root {
+  --app-hud-color-button-a: #64c8ff;
+  --app-hud-color-button-b: #64ff78;
+  --app-hud-color-button-c: #fff000;
+  --app-hud-color-button-start: #ff823c;
+  --app-hud-color-clock-emblem-inverted-1: #64cdff;
+  --app-hud-color-clock-emblem-inverted-2: #009bff;
+  --app-hud-color-clock-emblem-sun: #ffff6e;
+  --app-hud-color-clock-emblem-uninverted: #00aa64;
+  --app-hud-color-clock-moon: #ffff37;
+  --app-hud-color-clock-sun: #ff646e;
+  --app-hud-color-dpad: #808080;
+  --app-hud-color-hearts: #ff4632;
+  --app-hud-color-hearts-dd: #c80000;
+  --app-hud-color-magic: #00c800;
+  --app-hud-color-magic-inf: #0000c8;
+  --app-hud-color-map: #00ffff;
+  --app-hud-color-map-cursor-entrance: #c80000;
+  --app-hud-color-map-cursor-player: #c8ff00;
+  --app-hud-color-rupee-1: #c8ff64;
+  --app-hud-color-rupee-2: #aaaaff;
+  --app-hud-color-rupee-3: #ff6969;
+  --app-hud-color-rupee-4: #a060ff;
+  --app-hud-color-ui-background: #181818;
+}
+
+*[data-hud="button-a"] {
+  background-color: var(--app-hud-color-button-a);
+}
+
+*[data-hud="button-b"] {
+  background-color: var(--app-hud-color-button-b);
+}
+
+*[data-hud="button-c"] {
+  background-color: var(--app-hud-color-button-c);
+}
+
+*[data-hud="button-start"] {
+  background-color: var(--app-hud-color-button-start);
+}
+
+*[data-hud="clock-emblem-inverted-1"] {
+  background-color: var(--app-hud-color-clock-emblem-inverted-1);
+}
+
+*[data-hud="clock-emblem-inverted-2"] {
+  background-color: var(--app-hud-color-clock-emblem-inverted-2);
+}
+
+*[data-hud="clock-emblem-sun"] {
+  background-color: var(--app-hud-color-clock-emblem-sun);
+}
+
+*[data-hud="clock-emblem-uninverted"] {
+  background-color: var(--app-hud-color-clock-emblem-uninverted);
+}
+
+*[data-hud="clock-moon"] {
+  color: var(--app-hud-color-clock-moon);
+}
+
+*[data-hud="clock-sun"] {
+  color: var(--app-hud-color-clock-sun);
+}
+
+*[data-hud="dpad"] {
+  background-color: var(--app-hud-color-dpad);
+}
+
+*[data-hud="hearts"] {
+  color: var(--app-hud-color-hearts);
+}
+
+*[data-hud="hearts-dd"] {
+  color: var(--app-hud-color-hearts-dd);
+}
+
+*[data-hud="magic"] {
+  background-color: var(--app-hud-color-magic);
+}
+
+*[data-hud="magic-inf"] {
+  background-color: var(--app-hud-color-magic-inf);
+}
+
+*[data-hud="map"] {
+  background-color: var(--app-hud-color-map);
+}
+
+*[data-hud="map-cursor-entrance"] {
+  color: var(--app-hud-color-map-cursor-entrance);
+}
+
+*[data-hud="map-cursor-player"] {
+  background-color: var(--app-hud-color-ui-background);
+  color: var(--app-hud-color-map-cursor-player);
+}
+
+*[data-hud="rupee-1"] {
+  background-color: var(--app-hud-color-rupee-1);
+}
+
+*[data-hud="rupee-2"] {
+  background-color: var(--app-hud-color-rupee-2);
+}
+
+*[data-hud="rupee-3"] {
+  background-color: var(--app-hud-color-rupee-3);
+}
+
+*[data-hud="rupee-4"] {
+  background-color: var(--app-hud-color-rupee-4);
+}
+
+*[data-hud="ui-background"] {
+  background-color: var(--app-hud-color-ui-background);
+}

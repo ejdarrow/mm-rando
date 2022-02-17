@@ -1,0 +1,216 @@
+:root {
+  --app-itempool-label-h-width: 13rem;
+  --app-itempool-label-v-height: 8rem;
+  --app-itempool-grid-highlight: rgba(255, 255, 255, 0.3);
+}
+
+/* TODO: Automate via CSS preprocessor? */
+.rando-itempool-root-container[data-hovered-column="0"] .rando-itempool-cell[data-column="0"],
+.rando-itempool-root-container[data-hovered-column="1"] .rando-itempool-cell[data-column="1"],
+.rando-itempool-root-container[data-hovered-column="2"] .rando-itempool-cell[data-column="2"],
+.rando-itempool-root-container[data-hovered-column="3"] .rando-itempool-cell[data-column="3"],
+.rando-itempool-root-container[data-hovered-column="4"] .rando-itempool-cell[data-column="4"],
+.rando-itempool-root-container[data-hovered-column="5"] .rando-itempool-cell[data-column="5"],
+.rando-itempool-root-container[data-hovered-column="6"] .rando-itempool-cell[data-column="6"],
+.rando-itempool-root-container[data-hovered-column="7"] .rando-itempool-cell[data-column="7"],
+.rando-itempool-root-container[data-hovered-column="8"] .rando-itempool-cell[data-column="8"],
+.rando-itempool-root-container[data-hovered-column="9"] .rando-itempool-cell[data-column="9"],
+.rando-itempool-root-container[data-hovered-column="10"] .rando-itempool-cell[data-column="10"],
+.rando-itempool-root-container[data-hovered-column="11"] .rando-itempool-cell[data-column="11"],
+.rando-itempool-root-container[data-hovered-column="12"] .rando-itempool-cell[data-column="12"],
+.rando-itempool-root-container[data-hovered-column="13"] .rando-itempool-cell[data-column="13"],
+.rando-itempool-root-container[data-hovered-column="14"] .rando-itempool-cell[data-column="14"],
+.rando-itempool-root-container[data-hovered-column="15"] .rando-itempool-cell[data-column="15"],
+.rando-itempool-root-container[data-hovered-column="16"] .rando-itempool-cell[data-column="16"],
+.rando-itempool-root-container[data-hovered-column="17"] .rando-itempool-cell[data-column="17"],
+.rando-itempool-root-container[data-hovered-column="18"] .rando-itempool-cell[data-column="18"],
+.rando-itempool-root-container[data-hovered-column="19"] .rando-itempool-cell[data-column="19"],
+.rando-itempool-root-container[data-hovered-column="20"] .rando-itempool-cell[data-column="20"],
+.rando-itempool-root-container[data-hovered-column="21"] .rando-itempool-cell[data-column="21"],
+.rando-itempool-root-container[data-hovered-column="22"] .rando-itempool-cell[data-column="22"],
+.rando-itempool-root-container[data-hovered-column="23"] .rando-itempool-cell[data-column="23"],
+.rando-itempool-root-container[data-hovered-column="24"] .rando-itempool-cell[data-column="24"] {
+  border-color: var(--app-itempool-grid-highlight);
+  border-style: dashed;
+  border-left-width: 1px;
+  border-right-width: 1px;
+}
+
+/* TODO: Automate via CSS preprocessor? */
+.rando-itempool-root-container[data-hovered-row="0"] .rando-itempool-cell[data-row="0"],
+.rando-itempool-root-container[data-hovered-row="1"] .rando-itempool-cell[data-row="1"],
+.rando-itempool-root-container[data-hovered-row="2"] .rando-itempool-cell[data-row="2"],
+.rando-itempool-root-container[data-hovered-row="3"] .rando-itempool-cell[data-row="3"],
+.rando-itempool-root-container[data-hovered-row="4"] .rando-itempool-cell[data-row="4"],
+.rando-itempool-root-container[data-hovered-row="5"] .rando-itempool-cell[data-row="5"],
+.rando-itempool-root-container[data-hovered-row="6"] .rando-itempool-cell[data-row="6"],
+.rando-itempool-root-container[data-hovered-row="7"] .rando-itempool-cell[data-row="7"],
+.rando-itempool-root-container[data-hovered-row="8"] .rando-itempool-cell[data-row="8"],
+.rando-itempool-root-container[data-hovered-row="9"] .rando-itempool-cell[data-row="9"],
+.rando-itempool-root-container[data-hovered-row="10"] .rando-itempool-cell[data-row="10"],
+.rando-itempool-root-container[data-hovered-row="11"] .rando-itempool-cell[data-row="11"],
+.rando-itempool-root-container[data-hovered-row="12"] .rando-itempool-cell[data-row="12"],
+.rando-itempool-root-container[data-hovered-row="13"] .rando-itempool-cell[data-row="13"],
+.rando-itempool-root-container[data-hovered-row="14"] .rando-itempool-cell[data-row="14"],
+.rando-itempool-root-container[data-hovered-row="15"] .rando-itempool-cell[data-row="15"],
+.rando-itempool-root-container[data-hovered-row="16"] .rando-itempool-cell[data-row="16"],
+.rando-itempool-root-container[data-hovered-row="17"] .rando-itempool-cell[data-row="17"],
+.rando-itempool-root-container[data-hovered-row="18"] .rando-itempool-cell[data-row="18"],
+.rando-itempool-root-container[data-hovered-row="19"] .rando-itempool-cell[data-row="19"],
+.rando-itempool-root-container[data-hovered-row="20"] .rando-itempool-cell[data-row="20"],
+.rando-itempool-root-container[data-hovered-row="21"] .rando-itempool-cell[data-row="21"],
+.rando-itempool-root-container[data-hovered-row="22"] .rando-itempool-cell[data-row="22"],
+.rando-itempool-root-container[data-hovered-row="23"] .rando-itempool-cell[data-row="23"],
+.rando-itempool-root-container[data-hovered-row="24"] .rando-itempool-cell[data-row="24"],
+.rando-itempool-root-container[data-hovered-row="25"] .rando-itempool-cell[data-row="25"],
+.rando-itempool-root-container[data-hovered-row="26"] .rando-itempool-cell[data-row="26"],
+.rando-itempool-root-container[data-hovered-row="27"] .rando-itempool-cell[data-row="27"],
+.rando-itempool-root-container[data-hovered-row="28"] .rando-itempool-cell[data-row="28"],
+.rando-itempool-root-container[data-hovered-row="29"] .rando-itempool-cell[data-row="29"],
+.rando-itempool-root-container[data-hovered-row="30"] .rando-itempool-cell[data-row="30"],
+.rando-itempool-root-container[data-hovered-row="31"] .rando-itempool-cell[data-row="31"],
+.rando-itempool-root-container[data-hovered-row="32"] .rando-itempool-cell[data-row="32"],
+.rando-itempool-root-container[data-hovered-row="33"] .rando-itempool-cell[data-row="33"],
+.rando-itempool-root-container[data-hovered-row="34"] .rando-itempool-cell[data-row="34"],
+.rando-itempool-root-container[data-hovered-row="35"] .rando-itempool-cell[data-row="35"],
+.rando-itempool-root-container[data-hovered-row="36"] .rando-itempool-cell[data-row="36"],
+.rando-itempool-root-container[data-hovered-row="37"] .rando-itempool-cell[data-row="37"],
+.rando-itempool-root-container[data-hovered-row="38"] .rando-itempool-cell[data-row="38"],
+.rando-itempool-root-container[data-hovered-row="39"] .rando-itempool-cell[data-row="39"],
+.rando-itempool-root-container[data-hovered-row="40"] .rando-itempool-cell[data-row="40"] {
+  border-color: var(--app-itempool-grid-highlight);
+  border-style: dashed;
+  border-bottom-width: 1px;
+  border-top-width: 1px;
+}
+
+.rando-itempool-cell {
+  background-color: rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.rando-itempool-root-container {
+  padding: 1rem;
+}
+
+.rando-itempool-head-container {
+  display: grid;
+  grid-template-columns: 1fr 2rem;
+  padding-bottom: 0.25rem;
+}
+
+.rando-itempool-head {
+  display: grid;
+  grid-template-columns: var(--app-itempool-label-h-width) repeat(var(--app-itempool-column-count), minmax(0, 1fr));
+  grid-template-rows: var(--app-itempool-label-v-height) auto;
+  justify-items: center;
+  padding-bottom: 0.25rem;
+  place-content: center;
+  row-gap: 0.25rem;
+}
+
+.rando-itempool-body {
+  display: grid;
+  grid-auto-flow: row;
+  grid-template-columns: var(--app-itempool-label-h-width) repeat(var(--app-itempool-column-count), minmax(0, 1fr));
+  justify-items: center;
+  padding: 0.25rem 0;
+  place-content: center;
+}
+
+.rando-itempool-head-scroll-container {
+  display: grid;
+  grid-template-columns: 1fr 0.5rem minmax(min-content, max-content);
+}
+
+.rando-itempool-body-scroll-container {
+  display: grid;
+  grid-template-columns: 1fr 0.5rem;
+  max-height: 800px;
+  overflow-y: scroll;
+  scroll-behavior: smooth;
+}
+
+.rando-itempool-body-container {
+  border-top: dashed 0.125rem #ccc;
+  display: grid;
+  grid-column: span 2 / span 2;
+  grid-template-columns: 1fr 2rem;
+  max-height: 800px;
+  padding-top: 0.25rem;
+}
+
+.rando-itempool-root-container input[type="checkbox"] {
+  accent-color: var(--violet-500);
+  height: 1rem;
+  width: 1rem;
+}
+
+.rando-itempool-corner {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 0.5em;
+  width: 100%;
+}
+
+.rando-itempool-label-h {
+  display: grid;
+  justify-self: end;
+  min-height: 2.25rem;
+  width: 100%;
+  padding-right: 0.5em;
+}
+
+.rando-itempool-label-h > label {
+  align-items: center;
+  column-gap: 0.25rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  justify-self: end;
+}
+
+.rando-itempool-label-h > label > span {
+  padding: 0 0.25rem 0.25rem 0;
+  user-select: none;
+}
+
+.rando-itempool-label-v {
+  display: flex;
+  justify-content: center;
+  padding-right: 0.5rem;
+  transform: rotate(30deg);
+  transform-origin: bottom;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.rando-itempool-label-v > span {
+  transform: rotate(180deg);
+  user-select: none;
+  writing-mode: vertical-lr;
+}
+
+.rando-itempool-label-v > span:hover {
+  color: var(--violet-500);
+  font-weight: 600;
+}
+
+.rando-itempool-topleft {
+  justify-self: start;
+}
+
+.rando-itempool-topleft > span {
+  display: inline-block;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  user-select: none;
+  white-space: nowrap;
+  width: 0;
+}
+
+.rando-itempool-row {
+  display: contents;
+}
