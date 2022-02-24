@@ -57,6 +57,7 @@
 
 html {
   font-family: "InterVariable", sans-serif;
+  scrollbar-gutter: stable;
 }
 
 html,
@@ -154,6 +155,10 @@ input[type="text"] {
 .hidden-vertical-scrollbar {
   overflow-y: scroll;
   visibility: hidden;
+}
+
+.my-app-bg {
+  background-color: var(--app-background);
 }
 
 .my-bubble {

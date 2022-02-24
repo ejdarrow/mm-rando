@@ -32,7 +32,11 @@ module.exports = {
     },
     maxWidth: {
       '8xl': '90rem',
+      '1/2': '50%',
     },
+    minWidth: {
+      '1/2': '50%',
+    }
   },
   plugins: [],
 }

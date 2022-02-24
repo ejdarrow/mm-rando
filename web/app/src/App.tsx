@@ -4,8 +4,8 @@ import { ItemPoolGridRepr, ItemPoolState } from './ConfigTypes';
 import { ItemListBits } from './ItemList';
 import { UserInterfaceJson } from './JsonTypes';
 
-import ItemPoolGrid from './ItemPoolGrid';
 import HUDScreen from './HUDScreen';
+import ItemListContent from './ItemListContent';
 import Nav from './Nav';
 
 import './App.css';
@@ -60,7 +60,7 @@ class App extends React.Component<AppProps, AppState> {
     }
 
     if (this.state.selectedIdentifier == 'item pool' && this.state.itemPool !== undefined) {
-      return <ItemPoolGrid data={this.state.itemPool} />
+      return <ItemListContent title='Item Pool' data={this.state.itemPool} allowMatrix={true} />
     }
   }
 

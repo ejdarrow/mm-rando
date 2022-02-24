@@ -11,6 +11,7 @@ const dataHoveredRowAtt = 'data-hovered-row';
 
 interface ItemPoolGridProps {
   data: ItemPoolState;
+  onStateChange?: () => void;
 }
 
 class ItemPoolGrid extends React.Component<ItemPoolGridProps> {
@@ -19,6 +20,11 @@ class ItemPoolGrid extends React.Component<ItemPoolGridProps> {
   constructor(props: ItemPoolGridProps) {
     super(props);
     this.gridRootElement = React.createRef<HTMLDivElement>();
+  }
+
+  triggerStateChange() {
+    if (this.props.onStateChange)
+      this.props.onStateChange();
   }
 
   /// Handle clicking the "all" checkbox.
@@ -30,6 +36,7 @@ class ItemPoolGrid extends React.Component<ItemPoolGridProps> {
       this.props.data.list.setNone();
     }
     this.forceUpdate();
+    this.triggerStateChange();
   }
 
   /// Handle clicking a cell checkbox.
@@ -38,6 +45,7 @@ class ItemPoolGrid extends React.Component<ItemPoolGridProps> {
     const cell = this.props.data.repr.matrix.get(colIndex, rowIndex);
     this.props.data.applyBitOperation(checked, cell.bitMask);
     this.forceUpdate();
+    this.triggerStateChange();
   };
 
   /// Handle clicking a column checkbox.
@@ -46,6 +54,7 @@ class ItemPoolGrid extends React.Component<ItemPoolGridProps> {
     const column = this.props.data.repr.columns[colIndex];
     this.props.data.applyBitOperation(checked, column.bitMask);
     this.forceUpdate();
+    this.triggerStateChange();
   };
 
   /// Handle clicking a row checkbox.
@@ -54,6 +63,7 @@ class ItemPoolGrid extends React.Component<ItemPoolGridProps> {
     const row = this.props.data.repr.rows[rowIndex];
     this.props.data.applyBitOperation(checked, row.bitMask);
     this.forceUpdate();
+    this.triggerStateChange();
   };
 
   handleMouseOver = (event: React.MouseEvent) => {
@@ -111,9 +121,6 @@ class ItemPoolGrid extends React.Component<ItemPoolGridProps> {
     const enabledPercentage = ((enabledCount / totalCount) * 100).toFixed(1);
     return (
       <>
-        <div className="flex justify-center p-3">
-          <input className="font-mono w-full" placeholder="Item Pool String" type="text" readOnly value={this.props.data.list.toString()} />
-        </div>
         <div className="rando-itempool-root-container" ref={this.gridRootElement}>
           {/* Grid head. */}
           <div className="rando-itempool-head-container">

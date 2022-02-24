@@ -1,6 +1,7 @@
 import { Matrix } from './Matrix';
 import { ItemPoolJson, ItemPoolColumnJson, ItemPoolRowJson } from './JsonTypes';
 import { ItemListBits, ItemListBitMask } from './ItemList';
+import { CategoryGroupContainer, CategoryGroupContainerBuilder } from './ItemCategory';
 
 export class ItemGridVector<T> {
   data: Readonly<T>;
@@ -43,6 +44,11 @@ export class ItemPoolItemRepr {
     this.rowIndex = rowIndex;
     this.itemName = itemName;
     this.locationName = locationName;
+  }
+
+  /// Compare two items by location name.
+  static compare(a: ItemPoolItemRepr, b: ItemPoolItemRepr) {
+    return a.locationName.localeCompare(b.locationName);
   }
 }
 
@@ -123,11 +129,15 @@ export class ItemPoolGridRepr {
   /// Item grid representation using location category and item category as axies.
   matrix: ItemMatrix;
 
-  constructor(columns: ItemPoolColumnRepr[], rows: ItemPoolRowRepr[], items: ItemPoolItemRepr[], matrix: ItemMatrix) {
+  /// Container for category groups which map to item groups.
+  categoryGroups: CategoryGroupContainer;
+
+  constructor(columns: ItemPoolColumnRepr[], rows: ItemPoolRowRepr[], items: ItemPoolItemRepr[], matrix: ItemMatrix, categoryGroups: CategoryGroupContainer) {
     this.columns = columns;
     this.rows = rows;
     this.items = items;
     this.matrix = matrix;
+    this.categoryGroups = categoryGroups;
   }
 
   static fromJson(data: ItemPoolJson) {
@@ -144,6 +154,8 @@ export class ItemPoolGridRepr {
     // Matrix representation.
     const matrix = new ItemMatrix(columns.length, rows.length);
 
+    const categoryGroupBuilder = new CategoryGroupContainerBuilder();
+
     data.Items.forEach(x => {
       const colIdx = columns.findIndex(location => {
         return x.LocationCategory === location.data.Category;
@@ -151,6 +163,9 @@ export class ItemPoolGridRepr {
       const rowIdx = rows.findIndex(item => {
         return x.ItemCategory === item.data.Category;
       });
+
+      const column = colIdx >= 0 ? columns[colIdx] : null;
+      const row = rowIdx >= 0 ? rows[rowIdx] : null;
 
       const item = new ItemPoolItemRepr(x.Index, colIdx, rowIdx, x.ItemName, x.LocationName);
 
@@ -173,12 +188,16 @@ export class ItemPoolGridRepr {
       }
 
       // Increment column and/or row counter.
-      if (colIdx >= 0) {
-        columns[colIdx].count++;
+      if (column !== null) {
+        column.count++;
       }
-      if (rowIdx >= 0) {
-        rows[rowIdx].count++;
+      if (row !== null) {
+        row.count++;
       }
+
+      // Append item to category groups.
+      categoryGroupBuilder.appendByLocationType(column, item);
+      categoryGroupBuilder.appendByItemType(row, item);
 
       items[item.index] = item;
     });
@@ -192,7 +211,10 @@ export class ItemPoolGridRepr {
     // Update all bit masks for each matrix cell, column and row.
     matrix.updateBitMasks(columns, rows);
 
-    return new ItemPoolGridRepr(columns, rows, items, matrix);
+    // Complete into CategoryGroupContainer.
+    const categoryGroupContainer = categoryGroupBuilder.complete();
+
+    return new ItemPoolGridRepr(columns, rows, items, matrix, categoryGroupContainer);
   }
 }
 

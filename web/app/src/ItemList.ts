@@ -224,10 +224,27 @@ export class ItemListBits {
     }
   }
 
+  clearBit(index: number) {
+    const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
+    this.storage[chunk] &= ~((1 << shift) >>> 0) >>> 0;
+  }
+
   hasBit(index: number) {
-    const chunk = Math.floor(index / 32);
-    const shift = index % 32;
+    const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
     return ((this.storage[chunk] >>> shift) & 1) == 1;
+  }
+
+  setBit(index: number) {
+    const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
+    this.storage[chunk] |= (1 << shift) >>> 0;
+  }
+
+  modifyBit(operation: boolean, index: number) {
+    if (operation) {
+      this.setBit(index);
+    } else {
+      this.clearBit(index);
+    }
   }
 
   /// Check whether the tail chunk is valid, e.g. does not contains out-of-range bits.
@@ -270,6 +287,12 @@ export class ItemListBits {
     if (this.isTailChunkValid() === false) {
       throw Error('Tail chunk contains out-of-range bits.');
     }
+  }
+
+  static calcChunkAndShift(index: number) {
+    const chunk = Math.floor(index / 32);
+    const shift = index % 32;
+    return tuple(chunk, shift);
   }
 
   static fromString(str: string, length: number) {
