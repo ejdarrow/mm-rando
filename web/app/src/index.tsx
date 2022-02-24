@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import '@fontsource/inter'
+import '@fontsource/inter/variable.css'
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
