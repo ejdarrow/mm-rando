@@ -126,7 +126,13 @@ export class CategoryGroup {
   keysSorted: string[];
   compareFn?: CompareFn<string>;
 
-  constructor(mapping: ExMap<string, ItemGroup>, keysDefault: string[], keysSorted: string[], orphaned?: ItemGroup, compareFn?: CompareFn<string>) {
+  constructor(
+    mapping: ExMap<string, ItemGroup>,
+    keysDefault: string[],
+    keysSorted: string[],
+    orphaned?: ItemGroup,
+    compareFn?: CompareFn<string>
+  ) {
     this.mapping = mapping;
     this.keysDefault = keysDefault;
     this.keysSorted = keysSorted;
@@ -157,8 +163,7 @@ export class CategoryGroup {
     const newMapping: [string, ItemGroup][] = [];
     for (const [categoryValue, itemGroup] of this.mapping) {
       const filteredItemGroup = itemGroup.query(queryTerms);
-      if (filteredItemGroup.items.length !== 0)
-        newMapping.push(tuple(categoryValue, filteredItemGroup));
+      if (filteredItemGroup.items.length !== 0) newMapping.push(tuple(categoryValue, filteredItemGroup));
     }
     const filteredMapping = new ExMap<string, ItemGroup>(newMapping);
 
@@ -190,7 +195,7 @@ export class ItemGroup {
 
   /// Perform a query and return the resulting subset.
   query(queryTerms: string[]) {
-    const filteredItems = this.items.filter(x => {
+    const filteredItems = this.items.filter((x) => {
       for (const queryTerm of queryTerms) {
         const term = queryTerm.toLowerCase();
         // Only queries using location name for the time being.
@@ -204,7 +209,7 @@ export class ItemGroup {
   }
 
   static fromItems(items: ItemPoolItemRepr[]) {
-    const bitMask = ItemListBitMask.fromBits(items.map(x => x.index));
+    const bitMask = ItemListBitMask.fromBits(items.map((x) => x.index));
     return new ItemGroup(items, bitMask);
   }
 }

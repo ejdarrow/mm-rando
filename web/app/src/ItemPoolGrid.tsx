@@ -23,8 +23,7 @@ class ItemPoolGrid extends React.Component<ItemPoolGridProps> {
   }
 
   triggerStateChange() {
-    if (this.props.onStateChange)
-      this.props.onStateChange();
+    if (this.props.onStateChange) this.props.onStateChange();
   }
 
   /// Handle clicking the "all" checkbox.
@@ -37,7 +36,7 @@ class ItemPoolGrid extends React.Component<ItemPoolGridProps> {
     }
     this.forceUpdate();
     this.triggerStateChange();
-  }
+  };
 
   /// Handle clicking a cell checkbox.
   handleCellCheckboxClick = (event: React.MouseEvent<HTMLInputElement>, colIndex: number, rowIndex: number) => {
@@ -89,18 +88,12 @@ class ItemPoolGrid extends React.Component<ItemPoolGridProps> {
     const columnAttr = cellElement.getAttribute(dataColumnAtt);
     const rowAttr = cellElement.getAttribute(dataRowAtt);
     if (columnAttr) {
-      this.gridRootElement.current?.setAttribute(
-        dataHoveredColumnAtt,
-        columnAttr
-      );
+      this.gridRootElement.current?.setAttribute(dataHoveredColumnAtt, columnAttr);
     }
     if (rowAttr) {
-      this.gridRootElement.current?.setAttribute(
-        dataHoveredRowAtt,
-        rowAttr
-      );
+      this.gridRootElement.current?.setAttribute(dataHoveredRowAtt, rowAttr);
     }
-  };
+  }
 
   /// Update the CSS global variable for the item grid column count.
   updateColumnCountCSSVariable() {
@@ -110,7 +103,9 @@ class ItemPoolGrid extends React.Component<ItemPoolGridProps> {
   renderGridCell(colIndex: number, rowIndex: number) {
     const checkedState = this.props.data.getCellCheckedState(colIndex, rowIndex);
     if (checkedState !== undefined) {
-      return <Checkbox value={checkedState} onClick={(event) => this.handleCellCheckboxClick(event, colIndex, rowIndex)} />
+      return (
+        <Checkbox value={checkedState} onClick={(event) => this.handleCellCheckboxClick(event, colIndex, rowIndex)} />
+      );
     }
   }
 
@@ -128,36 +123,39 @@ class ItemPoolGrid extends React.Component<ItemPoolGridProps> {
               <div className="rando-itempool-head">
                 {/* Show randomized percentage. */}
                 <div className="rando-itempool-topleft">
-                  <span>Randomized: {enabledCount} / {totalCount} ({enabledPercentage}%)</span>
+                  <span>
+                    Randomized: {enabledCount} / {totalCount} ({enabledPercentage}%)
+                  </span>
                 </div>
 
                 {/* Column labels. */}
-                {this.props.data.repr.columns.map(col => {
+                {this.props.data.repr.columns.map((col) => {
                   return (
                     <div className="rando-itempool-label-v" key={'label:' + col.index}>
-                      <span>{col.data.Name}: +{col.count}</span>
+                      <span>
+                        {col.data.Name}: +{col.count}
+                      </span>
                     </div>
-                  )
+                  );
                 })}
 
                 {/* "All" checkbox. */}
                 <div className="rando-itempool-corner">
                   <div>
-                    <Checkbox
-                      value={this.props.data.list.getCheckedStateAll()}
-                      onClick={this.handleAllCheckboxClick} />
+                    <Checkbox value={this.props.data.list.getCheckedStateAll()} onClick={this.handleAllCheckboxClick} />
                   </div>
                 </div>
 
                 {/* Column checkboxes. */}
-                {this.props.data.repr.columns.map(col => {
+                {this.props.data.repr.columns.map((col) => {
                   return (
                     <div className="rando-itempool-col-checkbox" key={'checkbox:' + col.index}>
                       <Checkbox
                         value={this.props.data.getColumnCheckedState(col.index)}
-                        onClick={(event) => this.handleColumnCheckboxClick(event, col.index)} />
+                        onClick={(event) => this.handleColumnCheckboxClick(event, col.index)}
+                      />
                     </div>
-                  )
+                  );
                 })}
               </div>
               <div></div>
@@ -171,21 +169,24 @@ class ItemPoolGrid extends React.Component<ItemPoolGridProps> {
           <div className="rando-itempool-body-container">
             <div className="rando-itempool-body-scroll-container">
               <div className="rando-itempool-body">
-                {this.props.data.repr.rows.map(row => {
+                {this.props.data.repr.rows.map((row) => {
                   return (
                     <div className="rando-itempool-row" key={row.index}>
                       {/* Row label. */}
                       <div className="rando-itempool-label-h">
                         <label data-row={row.index} onMouseOver={this.handleMouseOver} onMouseOut={this.handleMouseOut}>
-                          <span>{row.data.Name}: +{row.count}</span>
+                          <span>
+                            {row.data.Name}: +{row.count}
+                          </span>
                           <Checkbox
                             value={this.props.data.getRowCheckedState(row.index)}
-                            onClick={(event) => this.handleRowCheckboxClick(event, row.index)} />
+                            onClick={(event) => this.handleRowCheckboxClick(event, row.index)}
+                          />
                         </label>
                       </div>
 
                       {/* Grid cells. */}
-                      {this.props.data.repr.columns.map(column => {
+                      {this.props.data.repr.columns.map((column) => {
                         return (
                           <div
                             className="rando-itempool-cell"
@@ -197,17 +198,17 @@ class ItemPoolGrid extends React.Component<ItemPoolGridProps> {
                           >
                             {this.renderGridCell(column.index, row.index)}
                           </div>
-                        )
+                        );
                       })}
                     </div>
-                  )
+                  );
                 })}
               </div>
             </div>
           </div>
         </div>
       </>
-    )
+    );
   }
 }
 

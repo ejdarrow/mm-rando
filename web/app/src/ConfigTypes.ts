@@ -62,7 +62,7 @@ class ItemMatrixCell {
   }
 
   updateBitMask() {
-    const bitIndexes = this.items.map(x => x.index);
+    const bitIndexes = this.items.map((x) => x.index);
     this.bitMask = ItemListBitMask.fromBits(bitIndexes);
   }
 }
@@ -77,10 +77,10 @@ class ItemMatrix extends Matrix<ItemMatrixCell> {
     }
     if (vector.orphaned.length > 0) {
       // Push orphaned list bit mask.
-      const orphanedBitMask = ItemListBitMask.fromBits(vector.orphaned.map(x => x.index));
+      const orphanedBitMask = ItemListBitMask.fromBits(vector.orphaned.map((x) => x.index));
       array.push(orphanedBitMask);
     }
-    return ItemListBitMask.bitwiseOrAll(array.filter(x => x !== undefined));
+    return ItemListBitMask.bitwiseOrAll(array.filter((x) => x !== undefined));
   }
 
   createColumnBitMask(column: ItemPoolColumnRepr) {
@@ -132,7 +132,13 @@ export class ItemPoolGridRepr {
   /// Container for category groups which map to item groups.
   categoryGroups: CategoryGroupContainer;
 
-  constructor(columns: ItemPoolColumnRepr[], rows: ItemPoolRowRepr[], items: ItemPoolItemRepr[], matrix: ItemMatrix, categoryGroups: CategoryGroupContainer) {
+  constructor(
+    columns: ItemPoolColumnRepr[],
+    rows: ItemPoolRowRepr[],
+    items: ItemPoolItemRepr[],
+    matrix: ItemMatrix,
+    categoryGroups: CategoryGroupContainer
+  ) {
     this.columns = columns;
     this.rows = rows;
     this.items = items;
@@ -142,10 +148,10 @@ export class ItemPoolGridRepr {
 
   static fromJson(data: ItemPoolJson) {
     const columns = data.Columns.map((col, idx) => {
-      return new ItemPoolColumnRepr(col, 0, idx)
+      return new ItemPoolColumnRepr(col, 0, idx);
     });
     const rows = data.Rows.map((row, idx) => {
-      return new ItemPoolRowRepr(row, 0, idx)
+      return new ItemPoolRowRepr(row, 0, idx);
     });
 
     // Flat item array representation.
@@ -156,11 +162,11 @@ export class ItemPoolGridRepr {
 
     const categoryGroupBuilder = new CategoryGroupContainerBuilder();
 
-    data.Items.forEach(x => {
-      const colIdx = columns.findIndex(location => {
+    data.Items.forEach((x) => {
+      const colIdx = columns.findIndex((location) => {
         return x.LocationCategory === location.data.Category;
       });
-      const rowIdx = rows.findIndex(item => {
+      const rowIdx = rows.findIndex((item) => {
         return x.ItemCategory === item.data.Category;
       });
 
@@ -203,7 +209,7 @@ export class ItemPoolGridRepr {
     });
 
     // Validate that items flat array contains no `undefined` elements.
-    const indexOfUndefined = items.findIndex(x => x === undefined);
+    const indexOfUndefined = items.findIndex((x) => x === undefined);
     if (indexOfUndefined !== -1) {
       throw Error(`Item index is missing: [${indexOfUndefined}]`);
     }

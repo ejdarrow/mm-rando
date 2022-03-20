@@ -9,20 +9,16 @@ export function coalesceUndef<TInput, TOutput>(x: TInput | undefined, fn: (arg: 
 }
 
 export function filterDefined<T>(array: Array<T | undefined>) {
-  return array.filter(x => x !== undefined) as unknown as Array<T>;
+  return array.filter((x) => x !== undefined) as unknown as Array<T>;
 }
 
 export const isHexString = (str: string) => {
   for (var i = 0; i < str.length; i++) {
     const c = str[i];
-    if ('0' <= c && c <= '9')
-      continue;
-    else if ('a' <= c && c <= 'f')
-      continue;
-    else if ('A' <= c && c <= 'F')
-      continue;
-    else
-      return false;
+    if ('0' <= c && c <= '9') continue;
+    else if ('a' <= c && c <= 'f') continue;
+    else if ('A' <= c && c <= 'F') continue;
+    else return false;
   }
   return true;
 };
@@ -38,10 +34,10 @@ export function mergeRefs<T>(...refs: Array<React.RefObject<T> | undefined>) {
       mutable.current = inst;
     }
   };
-};
+}
 
 export const tuple = <T extends any[]>(...args: T): T => args;
 
 export namespace u32 {
-  export const MAX = 0xFFFFFFFF;
+  export const MAX = 0xffffffff;
 }

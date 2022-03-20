@@ -10,7 +10,7 @@ export class Matrix<T> {
   }
 
   calcFlatIndex(colIndex: number, rowIndex: number) {
-    return (rowIndex * this.colCount) + colIndex;
+    return rowIndex * this.colCount + colIndex;
   }
 
   get(colIndex: number, rowIndex: number) {

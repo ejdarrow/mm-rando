@@ -35,20 +35,20 @@ class ItemListContent extends React.Component<ItemListContentProps, ItemListCont
     if (this.itemListTextElementRef.current !== null) {
       this.itemListTextElementRef.current.value = this.props.data.list.toString();
     }
-  }
+  };
 
   onViewCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked = event.currentTarget.checked;
     this.setState({
       viewState: checked ? ViewState.Matrix : ViewState.Query,
     });
-  }
+  };
 
   renderView() {
     if (this.state.viewState === ViewState.Query) {
-      return <ItemQueryView data={this.props.data} onStateChange={this.onStateChange} />
+      return <ItemQueryView data={this.props.data} onStateChange={this.onStateChange} />;
     } else if (this.state.viewState === ViewState.Matrix) {
-      return <ItemPoolGrid data={this.props.data} onStateChange={this.onStateChange} />
+      return <ItemPoolGrid data={this.props.data} onStateChange={this.onStateChange} />;
     }
   }
 
@@ -64,13 +64,18 @@ class ItemListContent extends React.Component<ItemListContentProps, ItemListCont
           <h1 className="font-semibold text-2xl pl-2">{this.props.title}</h1>
         </div>
         <div className="flex justify-center p-3">
-          <input className="font-mono w-full" placeholder="Item Pool String" type="text" ref={this.itemListTextElementRef} readOnly value={this.props.data.list.toString()} />
+          <input
+            className="font-mono w-full"
+            placeholder="Item Pool String"
+            type="text"
+            ref={this.itemListTextElementRef}
+            readOnly
+            value={this.props.data.list.toString()}
+          />
         </div>
-        <div>
-          {this.renderView()}
-        </div>
+        <div>{this.renderView()}</div>
       </>
-    )
+    );
   }
 }
 

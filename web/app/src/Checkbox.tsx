@@ -10,7 +10,7 @@ export enum CheckedState {
 export namespace CheckedState {
   export function fromBoolean(value: boolean) {
     return value ? CheckedState.Checked : CheckedState.Unchecked;
-  };
+  }
 
   /// Update a checkbox element according to a given checked state.
   export function updateCheckbox(element: HTMLInputElement, checkedState: CheckedState) {
@@ -28,15 +28,21 @@ export interface CheckboxProps {
 }
 
 export const Checkbox = (props: CheckboxProps) => {
-    const checkRef = useRef<HTMLInputElement>(null);
+  const checkRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-      if (checkRef.current !== null) {
-        CheckedState.updateCheckbox(checkRef.current, props.value);
-      }
-    });
+  useEffect(() => {
+    if (checkRef.current !== null) {
+      CheckedState.updateCheckbox(checkRef.current, props.value);
+    }
+  });
 
-    return (
-      <input type="checkbox" className={props.className} ref={mergeRefs(props.inputRef, checkRef)} onChange={props.onChange} onClick={props.onClick} />
-    )
-}
+  return (
+    <input
+      type="checkbox"
+      className={props.className}
+      ref={mergeRefs(props.inputRef, checkRef)}
+      onChange={props.onChange}
+      onClick={props.onClick}
+    />
+  );
+};

@@ -36,12 +36,17 @@ class HUDScreen extends React.Component<HUDScreenProps> {
   render() {
     console.log('HUDScreen::render()');
     return (
-      <div className="bg-darker-1/4 border-2 flex flex-col font-sans grow p-4 select-none h-[56rem] max-h-[56rem] min-h-[30rem] min-w-[60rem] max-w-full" data-hud="root">
+      <div
+        className="bg-darker-1/4 border-2 flex flex-col font-sans grow p-4 select-none h-[56rem] max-h-[56rem] min-h-[30rem] min-w-[60rem] max-w-full"
+        data-hud="root"
+      >
         <div className="flex">
           {/* Heart colors, magic bar colors, D-Pad color. */}
           <div>
             <fieldset className="border-2 border-dashed p-4" style={{ marginTop: '-0.5rem' }}>
-              <legend className="px-3"><span>Hearts &amp; Magic</span></legend>
+              <legend className="px-3">
+                <span>Hearts &amp; Magic</span>
+              </legend>
               <div className="flex flex-col gap-3 w-80">
                 <button
                   className="text-3xl text-center my-outline"
@@ -64,15 +69,13 @@ class HUDScreen extends React.Component<HUDScreenProps> {
                   data-hud={id.magic}
                   data-hud-effect="background"
                   onClick={(event) => this.props.onClick(event, id.magic)}
-                >
-                </button>
+                ></button>
                 <button
                   className="my-outline-with-thin-border h-6"
                   data-hud={id.magicInfinite}
                   data-hud-effect="background"
                   onClick={(event) => this.props.onClick(event, id.magicInfinite)}
-                >
-                </button>
+                ></button>
               </div>
             </fieldset>
             <div className="h-4"></div>
@@ -99,7 +102,9 @@ class HUDScreen extends React.Component<HUDScreenProps> {
           {/* A, B, C button colors. */}
           <div>
             <fieldset className="border-2 border-dashed p-4" style={{ marginTop: '-0.5rem' }}>
-              <legend className="px-3"><span>Buttons</span></legend>
+              <legend className="px-3">
+                <span>Buttons</span>
+              </legend>
               <div className="flex gap-4 w-80">
                 <button
                   className="my-outline-with-border h-16 w-16"
@@ -134,15 +139,16 @@ class HUDScreen extends React.Component<HUDScreenProps> {
           {/* Rupee icon colors. */}
           <div className="flex flex-col gap-2 justify-end w-80">
             <fieldset className="border-2 border-dashed flex flex-col gap-3 p-4 w-max">
-              <legend className="px-3"><span>Rupees</span></legend>
+              <legend className="px-3">
+                <span>Rupees</span>
+              </legend>
               <div className="flex gap-2 items-center">
                 <button
                   className="my-outline-with-thin-border h-10 w-10"
                   data-hud={id.rupee4}
                   data-hud-effect="background"
                   onClick={(event) => this.props.onClick(event, id.rupee4)}
-                >
-                </button>
+                ></button>
                 <div>
                   <span className="my-bubble">999</span>
                 </div>
@@ -153,8 +159,7 @@ class HUDScreen extends React.Component<HUDScreenProps> {
                   data-hud={id.rupee3}
                   data-hud-effect="background"
                   onClick={(event) => this.props.onClick(event, id.rupee3)}
-                >
-                </button>
+                ></button>
                 <div>
                   <span className="my-bubble">500</span>
                 </div>
@@ -165,8 +170,7 @@ class HUDScreen extends React.Component<HUDScreenProps> {
                   data-hud={id.rupee2}
                   data-hud-effect="background"
                   onClick={(event) => this.props.onClick(event, id.rupee2)}
-                >
-                </button>
+                ></button>
                 <div>
                   <span className="my-bubble">200</span>
                 </div>
@@ -177,8 +181,7 @@ class HUDScreen extends React.Component<HUDScreenProps> {
                   data-hud={id.rupee1}
                   data-hud-effect="background"
                   onClick={(event) => this.props.onClick(event, id.rupee1)}
-                >
-                </button>
+                ></button>
                 <div>
                   <span className="my-bubble">99</span>
                 </div>
@@ -188,7 +191,9 @@ class HUDScreen extends React.Component<HUDScreenProps> {
           {/* Clock colors. */}
           <div className="flex gap-2 grow items-end place-content-center">
             <fieldset className="border-2 border-dashed flex gap-3 items-end place-content-center p-4">
-              <legend className="px-3"><span>Clock</span></legend>
+              <legend className="px-3">
+                <span>Clock</span>
+              </legend>
               <button
                 className="my-outline-with-border flex-center h-12 w-12"
                 data-hud={id.clockSun}
@@ -197,7 +202,10 @@ class HUDScreen extends React.Component<HUDScreenProps> {
               >
                 <FontAwesomeIcon className="text-2xl my-text-shadow-border-darker" icon={faSun} />
               </button>
-              <div className="my-outline-with-thin-border cursor-pointer flex-center p-6 h-52 w-48" data-hud="clock-emblem-sun">
+              <div
+                className="my-outline-with-thin-border cursor-pointer flex-center p-6 h-52 w-48"
+                data-hud="clock-emblem-sun"
+              >
                 <div className="my-outline-with-thin-border-inverted divide-y flex flex-col h-full w-full">
                   <button
                     className="grow"
@@ -238,7 +246,9 @@ class HUDScreen extends React.Component<HUDScreenProps> {
           {/* Minimap colors. */}
           <div className="flex flex-row-reverse items-end w-80">
             <fieldset className="border-2 border-dashed p-4">
-              <legend className="px-3"><span>Minimap</span></legend>
+              <legend className="px-3">
+                <span>Minimap</span>
+              </legend>
               <div className="flex flex-col-reverse gap-3 items-center">
                 <div
                   className="my-outline-with-thin-border cursor-pointer flex items-end justify-center p-4 h-32 w-32"
@@ -265,7 +275,7 @@ class HUDScreen extends React.Component<HUDScreenProps> {
           </div>
         </div>
       </div>
-    )
+    );
   }
 }
 

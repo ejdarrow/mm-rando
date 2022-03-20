@@ -29,15 +29,15 @@ export class ItemListBitMaskMut extends AbstractItemListBitMask {
 
   at = (index: number) => {
     return tuple(this.chunkIndexes[index], this.maskChunks[index]);
-  }
+  };
 
   complete = () => {
     return new ItemListBitMask(this.chunkIndexes, Uint32Array.from(this.maskChunks));
-  }
+  };
 
   length = () => {
     return this.chunkIndexes.length;
-  }
+  };
 
   /// Apply bitwise OR with another bit mask.
   bitwiseOr(other: AbstractItemListBitMask) {
@@ -66,15 +66,15 @@ export class ItemListBitMask extends AbstractItemListBitMask {
 
   at = (index: number) => {
     return tuple(this.chunkIndexes[index], this.maskChunks[index]);
-  }
+  };
 
   complete = () => {
     return this;
-  }
+  };
 
   length = () => {
     return this.chunkIndexes.length;
-  }
+  };
 
   clone() {
     return new ItemListBitMask(Array.from(this.chunkIndexes), Uint32Array.from(this.maskChunks));
@@ -125,7 +125,7 @@ export class ItemListBitMask extends AbstractItemListBitMask {
         maskChunks.push(1 << shift);
       } else {
         // Update existing mask chunk.
-        maskChunks[localIndex] |= (1 << shift);
+        maskChunks[localIndex] |= 1 << shift;
       }
     }
 
@@ -210,14 +210,13 @@ export class ItemListBits {
     // TODO: Optimize this?
     let count = 0;
     for (let i = 0; i < this.length; i++) {
-      if (this.hasBit(i))
-        count++;
+      if (this.hasBit(i)) count++;
     }
     return count;
   }
 
   getTailChunkBitMask() {
-    if ((this.storage.length % 32) !== 0) {
+    if (this.storage.length % 32 !== 0) {
       return u32.MAX >>> (32 - (this.length % 32));
     } else {
       return u32.MAX;
@@ -252,7 +251,7 @@ export class ItemListBits {
     if (this.storage.length > 0) {
       const tailBitMask = this.getTailChunkBitMask();
       const tailChunk = this.storage[this.storage.length - 1];
-      return ((tailChunk & tailBitMask) >>> 0) === tailChunk;
+      return (tailChunk & tailBitMask) >>> 0 === tailChunk;
     }
   }
 
@@ -277,7 +276,7 @@ export class ItemListBits {
   toString() {
     const sections = Array<string>(this.storage.length);
     for (let i = 0; i < sections.length; i++) {
-      sections[(sections.length - i) - 1] = this.storage[i] !== 0 ? this.storage[i].toString(16) : '';
+      sections[sections.length - i - 1] = this.storage[i] !== 0 ? this.storage[i].toString(16) : '';
     }
     return sections.join('-');
   }
@@ -304,7 +303,7 @@ export class ItemListBits {
 
     let storage = new Uint32Array(chunkCount);
     for (let i = 0; i < chunkCount; i++) {
-      const section = sections[(sections.length - i) - 1];
+      const section = sections[sections.length - i - 1];
       if (!isHexString(section) || section.length > 8) {
         throw Error(`Section is not valid UInt32 hex: "${section}"`);
       }

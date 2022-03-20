@@ -37,9 +37,7 @@ class Nav extends React.Component<NavProps> {
         new NavItem('Junk Locations'),
       ]),
       new NavSection(new NavItem('Comfort')),
-      new NavSection(new NavItem('Cosmetics'), [
-        new NavItem('HUD Colors'),
-      ]),
+      new NavSection(new NavItem('Cosmetics'), [new NavItem('HUD Colors')]),
     ];
   }
 
@@ -59,7 +57,7 @@ class Nav extends React.Component<NavProps> {
             {item.name}
           </a>
         </li>
-      )
+      );
     } else {
       return (
         <li key={item.identifier}>
@@ -71,7 +69,7 @@ class Nav extends React.Component<NavProps> {
             {item.name}
           </a>
         </li>
-      )
+      );
     }
   }
 
@@ -85,7 +83,7 @@ class Nav extends React.Component<NavProps> {
         >
           {item.name}
         </a>
-      )
+      );
     } else {
       return (
         <a
@@ -95,26 +93,22 @@ class Nav extends React.Component<NavProps> {
         >
           {item.name}
         </a>
-      )
+      );
     }
   }
 
   renderSection(section: NavSection) {
     let list;
     if (section.children && section.children.length > 0) {
-      list = section.children.map(child => (
-        this.renderChildNavItem(child)
-      ));
+      list = section.children.map((child) => this.renderChildNavItem(child));
     }
 
     return (
       <li className="mt-12 lg:mt-8" key={section.root.identifier}>
         {this.renderRootNavItem(section.root)}
-        <ul className="border-l-2 border-neutral-700 text-sm space-y-6 lg:space-y-1">
-          {list}
-        </ul>
+        <ul className="border-l-2 border-neutral-700 text-sm space-y-6 lg:space-y-1">{list}</ul>
       </li>
-    )
+    );
   }
 
   renderGeneratorSelect() {
@@ -131,7 +125,7 @@ class Nav extends React.Component<NavProps> {
           <span className="focus"></span>
         </div>
       </div>
-    )
+    );
   }
 
   render() {
@@ -139,11 +133,9 @@ class Nav extends React.Component<NavProps> {
       <>
         {this.renderGeneratorSelect()}
         <div className="my-separator h-1 mt-6 mb-2"></div>
-        <ul className="ml-5px">
-          {this.sections.map(section => this.renderSection(section))}
-        </ul>
+        <ul className="ml-5px">{this.sections.map((section) => this.renderSection(section))}</ul>
       </>
-    )
+    );
   }
 }
 

@@ -15,7 +15,7 @@
   --violet-900: rgb(76 29 149);
 }
 
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   --app-background: #0c0018;
 
   --app-neutral-background: #141515;
@@ -39,24 +39,24 @@
   color-scheme: light;
 }
 
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   color-scheme: dark;
   color: #ccc;
   scrollbar-color: var(--app-scrollbar-color-1) var(--app-scrollbar-color-2);
 }
 
-:root[data-theme="dark"] input {
+:root[data-theme='dark'] input {
   accent-color: var(--violet-500);
 }
 
 *,
 *::before,
 *::after {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 html {
-  font-family: "InterVariable", sans-serif;
+  font-family: 'InterVariable', sans-serif;
   scrollbar-gutter: stable;
 }
 
@@ -93,7 +93,7 @@ select::-ms-expand {
 .select {
   align-items: center;
   display: grid;
-  grid-template-areas: "select";
+  grid-template-areas: 'select';
   width: 100%;
   min-width: 15ch;
   max-width: 30ch;
@@ -108,7 +108,7 @@ select::-ms-expand {
 
 .select select {
   background-color: var(--app-select-background-color);
-  font-family: "Inter" sans-serif;
+  font-family: 'Inter' sans-serif;
 }
 
 .select:hover {
@@ -116,7 +116,7 @@ select::-ms-expand {
 }
 
 .select::after {
-  content: "";
+  content: '';
   width: 0.8em;
   height: 0.5em;
   background-color: var(--app-select-arrow-color);
@@ -141,7 +141,7 @@ select:focus + .focus {
   bottom: -1px;
 }
 
-input[type="text"] {
+input[type='text'] {
   border-radius: 0.25rem;
   padding: 0.5rem;
 }
@@ -165,7 +165,7 @@ input[type="text"] {
   background-color: rgba(0, 0, 0, 0.5);
   border-radius: 0.625rem;
   color: #eee;
-  font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
   font-weight: bold;
   font-size: 1rem;
   line-height: 1.5em;
@@ -216,7 +216,7 @@ input[type="text"] {
   text-shadow: -1px 0 var(--app-darker), 0 1px var(--app-darker), 1px 0 var(--app-darker), 0 -1px var(--app-darker);
 }
 
-:root[data-theme="dark"] .my-text-shadow-border {
+:root[data-theme='dark'] .my-text-shadow-border {
   text-shadow: -1px 0 white, 0 1px white, 1px 0 white, 0 -1px white;
 }
 

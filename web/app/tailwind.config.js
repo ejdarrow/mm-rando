@@ -36,7 +36,7 @@ module.exports = {
     },
     minWidth: {
       '1/2': '50%',
-    }
+    },
   },
   plugins: [],
-}
+};

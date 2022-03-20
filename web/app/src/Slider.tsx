@@ -12,7 +12,7 @@ export const Slider = (props: SliderProps) => {
       <input type="checkbox" defaultChecked={props.defaultChecked} onChange={props.onChange} />
       <span className="slider rounded"></span>
     </label>
-  )
-}
+  );
+};
 
 export default Slider;

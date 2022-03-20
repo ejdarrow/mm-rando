@@ -24,95 +24,95 @@
   --app-hud-color-ui-background: #181818;
 }
 
-*[data-hud="button-a"] {
+*[data-hud='button-a'] {
   background-color: var(--app-hud-color-button-a);
 }
 
-*[data-hud="button-b"] {
+*[data-hud='button-b'] {
   background-color: var(--app-hud-color-button-b);
 }
 
-*[data-hud="button-c"] {
+*[data-hud='button-c'] {
   background-color: var(--app-hud-color-button-c);
 }
 
-*[data-hud="button-start"] {
+*[data-hud='button-start'] {
   background-color: var(--app-hud-color-button-start);
 }
 
-*[data-hud="clock-emblem-inverted-1"] {
+*[data-hud='clock-emblem-inverted-1'] {
   background-color: var(--app-hud-color-clock-emblem-inverted-1);
 }
 
-*[data-hud="clock-emblem-inverted-2"] {
+*[data-hud='clock-emblem-inverted-2'] {
   background-color: var(--app-hud-color-clock-emblem-inverted-2);
 }
 
-*[data-hud="clock-emblem-sun"] {
+*[data-hud='clock-emblem-sun'] {
   background-color: var(--app-hud-color-clock-emblem-sun);
 }
 
-*[data-hud="clock-emblem-uninverted"] {
+*[data-hud='clock-emblem-uninverted'] {
   background-color: var(--app-hud-color-clock-emblem-uninverted);
 }
 
-*[data-hud="clock-moon"] {
+*[data-hud='clock-moon'] {
   color: var(--app-hud-color-clock-moon);
 }
 
-*[data-hud="clock-sun"] {
+*[data-hud='clock-sun'] {
   color: var(--app-hud-color-clock-sun);
 }
 
-*[data-hud="dpad"] {
+*[data-hud='dpad'] {
   background-color: var(--app-hud-color-dpad);
 }
 
-*[data-hud="hearts"] {
+*[data-hud='hearts'] {
   color: var(--app-hud-color-hearts);
 }
 
-*[data-hud="hearts-dd"] {
+*[data-hud='hearts-dd'] {
   color: var(--app-hud-color-hearts-dd);
 }
 
-*[data-hud="magic"] {
+*[data-hud='magic'] {
   background-color: var(--app-hud-color-magic);
 }
 
-*[data-hud="magic-inf"] {
+*[data-hud='magic-inf'] {
   background-color: var(--app-hud-color-magic-inf);
 }
 
-*[data-hud="map"] {
+*[data-hud='map'] {
   background-color: var(--app-hud-color-map);
 }
 
-*[data-hud="map-cursor-entrance"] {
+*[data-hud='map-cursor-entrance'] {
   color: var(--app-hud-color-map-cursor-entrance);
 }
 
-*[data-hud="map-cursor-player"] {
+*[data-hud='map-cursor-player'] {
   background-color: var(--app-hud-color-ui-background);
   color: var(--app-hud-color-map-cursor-player);
 }
 
-*[data-hud="rupee-1"] {
+*[data-hud='rupee-1'] {
   background-color: var(--app-hud-color-rupee-1);
 }
 
-*[data-hud="rupee-2"] {
+*[data-hud='rupee-2'] {
   background-color: var(--app-hud-color-rupee-2);
 }
 
-*[data-hud="rupee-3"] {
+*[data-hud='rupee-3'] {
   background-color: var(--app-hud-color-rupee-3);
 }
 
-*[data-hud="rupee-4"] {
+*[data-hud='rupee-4'] {
   background-color: var(--app-hud-color-rupee-4);
 }
 
-*[data-hud="ui-background"] {
+*[data-hud='ui-background'] {
   background-color: var(--app-hud-color-ui-background);
 }
