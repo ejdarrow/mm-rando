@@ -1,8 +1,9 @@
 import React from 'react';
-import { ItemPoolItemRepr, ItemPoolState } from './ConfigTypes';
-import { CategoryGroup, CategoryType, ItemGroup } from './ItemCategory';
-import { ItemListBits } from './ItemList';
-import { CheckedState, Checkbox } from './Checkbox';
+import { ItemPoolItemRepr, ItemPoolState } from './common/ConfigTypes';
+import { CategoryGroup, CategoryType, ItemGroup } from './common/ItemCategory';
+import { ItemListBits } from './common/ItemList';
+import { CheckedState } from './common/CheckedState';
+import { Checkbox } from './Checkbox';
 
 interface CardProps {
   itemListBits: ItemListBits;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ItemPoolState } from './ConfigTypes';
+import { ItemPoolState } from './common/ConfigTypes';
 
 import Slider from './Slider';
 import ItemQueryView from './ItemQueryView';

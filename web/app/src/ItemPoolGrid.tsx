@@ -1,6 +1,6 @@
 import React from 'react';
 import { Checkbox } from './Checkbox';
-import { ItemPoolState } from './ConfigTypes';
+import { ItemPoolState } from './common/ConfigTypes';
 import { setItemPoolColumnCount } from './RootStyle';
 import './ItemPoolGrid.css';
 

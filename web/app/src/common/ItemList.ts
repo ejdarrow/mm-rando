@@ -1,4 +1,4 @@
-import { CheckedState } from './Checkbox';
+import { CheckedState } from './CheckedState';
 import { isHexString, tuple, u32 } from './Utility';
 
 abstract class AbstractItemListBitMask implements Iterable<[number, number]> {

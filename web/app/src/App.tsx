@@ -1,8 +1,8 @@
 import React from 'react';
-import { api } from './Api';
-import { ItemPoolGridRepr, ItemPoolState } from './ConfigTypes';
-import { ItemListBits } from './ItemList';
-import { UserInterfaceJson } from './JsonTypes';
+import { api } from './common/Api';
+import { ItemPoolGridRepr, ItemPoolState } from './common/ConfigTypes';
+import { ItemListBits } from './common/ItemList';
+import { UserInterfaceJson } from './common/JsonTypes';
 
 import HUDScreen from './HUDScreen';
 import ItemListContent from './ItemListContent';
