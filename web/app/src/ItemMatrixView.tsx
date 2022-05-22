@@ -7,10 +7,10 @@ import { useAppDispatch, useAppSelector } from './hooks'
 import { ItemListStore } from './store/createItemListSlice'
 import './ItemMatrixView.css'
 
-const dataColumnAtt = 'data-column';
-const dataRowAtt = 'data-row';
-const dataHoveredColumnAtt = 'data-hovered-column';
-const dataHoveredRowAtt = 'data-hovered-row';
+const dataColumnAtt = 'data-column'
+const dataRowAtt = 'data-row'
+const dataHoveredColumnAtt = 'data-hovered-column'
+const dataHoveredRowAtt = 'data-hovered-row'
 
 interface ItemMatrixViewProps {
   store: ItemListStore
@@ -108,9 +108,9 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
   // TODO: Place in effect?
   updateColumnCountCSSVariable()
 
-  const enabledCount = itemListBits.getEnabledCount();
-  const totalCount = itemListRepr.items.length;
-  const enabledPercentage = ((enabledCount / totalCount) * 100).toFixed(1);
+  const enabledCount = itemListBits.getEnabledCount()
+  const totalCount = itemListRepr.items.length
+  const enabledPercentage = ((enabledCount / totalCount) * 100).toFixed(1)
   return (
     <>
       <div className="rando-itempool-root-container" ref={gridRootElement}>
@@ -133,7 +133,7 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
                       {col.data.Name}: +{col.count}
                     </span>
                   </div>
-                );
+                )
               })}
 
               {/* "All" checkbox. */}
@@ -152,7 +152,7 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
                       onClick={(event) => handleColumnCheckboxClick(event, col.index)}
                     />
                   </div>
-                );
+                )
               })}
             </div>
             <div></div>
@@ -195,10 +195,10 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
                         >
                           {renderGridCell(column.index, row.index)}
                         </div>
-                      );
+                      )
                     })}
                   </div>
-                );
+                )
               })}
             </div>
           </div>
@@ -208,4 +208,4 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
   )
 }
 
-export default ItemMatrixView;
+export default ItemMatrixView

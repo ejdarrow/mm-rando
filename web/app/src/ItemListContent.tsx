@@ -29,7 +29,7 @@ const ItemListContent = (props: ItemListContentProps) => {
     setState({
       viewState: checked ? ViewState.Matrix : ViewState.Query
     })
-  };
+  }
 
   const renderView = () => {
     if (state.viewState === ViewState.Query) {
@@ -57,4 +57,4 @@ const ItemListContent = (props: ItemListContentProps) => {
   )
 }
 
-export default ItemListContent;
+export default ItemListContent

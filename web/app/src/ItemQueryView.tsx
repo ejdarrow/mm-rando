@@ -19,7 +19,7 @@ const Card = (props: CardProps) => {
   const dispatch = useAppDispatch()
 
   const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = event.currentTarget.checked;
+    const checked = event.currentTarget.checked
     if (checked) {
       dispatch(props.store.slice.actions.bitSet(index))
     } else {
@@ -51,9 +51,9 @@ const Card = (props: CardProps) => {
 }
 
 interface ItemQueryCategoryProps {
-  name: string;
-  itemGroup: ItemGroup;
-  store: ItemListStore;
+  name: string
+  itemGroup: ItemGroup
+  store: ItemListStore
 }
 
 const ItemQueryCategory = (props: ItemQueryCategoryProps) => {
@@ -100,9 +100,9 @@ const ItemQueryCategory = (props: ItemQueryCategoryProps) => {
 }
 
 interface ItemQueryViewState {
-  categoryType: CategoryType;
-  queryResult: CategoryGroup;
-  queryWords?: string[];
+  categoryType: CategoryType
+  queryResult: CategoryGroup
+  queryWords?: string[]
 }
 
 interface ItemQueryViewProps {
@@ -110,8 +110,8 @@ interface ItemQueryViewProps {
 }
 
 const ItemQueryView = (props: ItemQueryViewProps) => {
-  const defaultCategoryType = CategoryType.Location;
-  const itemListRepr = useItemListRepr();
+  const defaultCategoryType = CategoryType.Location
+  const itemListRepr = useItemListRepr()
   const [state, setState] = useState<ItemQueryViewState>({
     categoryType: defaultCategoryType,
     queryResult: itemListRepr.categoryGroups.byCategory(defaultCategoryType)
@@ -136,17 +136,17 @@ const ItemQueryView = (props: ItemQueryViewProps) => {
   }
 
   const onCategorySelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedOption = event.currentTarget.selectedOptions[0];
-    const categoryType = Number.parseInt(selectedOption.value) as CategoryType;
+    const selectedOption = event.currentTarget.selectedOptions[0]
+    const categoryType = Number.parseInt(selectedOption.value) as CategoryType
     if (state.categoryType !== categoryType) {
-      updateQueryResult(categoryType, state.queryWords);
+      updateQueryResult(categoryType, state.queryWords)
     }
   }
 
   const onQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const text = event.currentTarget.value;
-    const queryWords = text.split(/\s/g);
-    updateQueryResult(state.categoryType, queryWords);
+    const text = event.currentTarget.value
+    const queryWords = text.split(/\s/g)
+    updateQueryResult(state.categoryType, queryWords)
   }
 
   return (
@@ -168,7 +168,7 @@ const ItemQueryView = (props: ItemQueryViewProps) => {
       </div>
       <div className="p-4 w-full select-none">
         {Array.from(state.queryResult.childrenSorted(), ([categoryValue, itemGroup]) => {
-          const categoryValueName = categoryValue ?? '<None>';
+          const categoryValueName = categoryValue ?? '<None>'
           return (
             <ItemQueryCategory
               key={categoryValue}
@@ -176,11 +176,11 @@ const ItemQueryView = (props: ItemQueryViewProps) => {
               itemGroup={itemGroup}
               store={props.store}
             />
-          );
+          )
         })}
       </div>
     </div>
-  );
+  )
 }
 
-export default ItemQueryView;
+export default ItemQueryView

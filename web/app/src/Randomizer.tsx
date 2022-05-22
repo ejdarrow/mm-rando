@@ -5,7 +5,7 @@ import { ItemListRepr } from './common/ConfigTypes'
 import { UserInterfaceJson } from './common/JsonTypes'
 import itemPoolListSlice from './store/itemPoolListSlice'
 
-const ItemListReprContext = React.createContext<ItemListRepr | undefined>(undefined);
+const ItemListReprContext = React.createContext<ItemListRepr | undefined>(undefined)
 
 export const useContextOrError = <T,>(context: React.Context<T | undefined>): T => {
   const result = React.useContext(context)
@@ -28,8 +28,8 @@ class RandomizerState {
 }
 
 const Randomizer = (props: React.PropsWithChildren<RandomizerProps>) => {
-  const [state, setState] = useState<RandomizerState>();
-  const dispatch = useDispatch();
+  const [state, setState] = useState<RandomizerState>()
+  const dispatch = useDispatch()
 
   // Fetch generator-specific JSON file. For now, just gets item list representation.
   const fetchConfiguration = () => {
@@ -42,7 +42,7 @@ const Randomizer = (props: React.PropsWithChildren<RandomizerProps>) => {
         value: itemListTestString,
         length: grid.items.length
       }))
-    });
+    })
   }
 
   useEffect(() => {
@@ -54,7 +54,7 @@ const Randomizer = (props: React.PropsWithChildren<RandomizerProps>) => {
       })
       dispatch(itemPoolListSlice.actions.stateClear())
     }
-  }, []);
+  }, [])
 
   return (
     <ItemListReprContext.Provider value={state?.itemListRepr}>
@@ -63,4 +63,4 @@ const Randomizer = (props: React.PropsWithChildren<RandomizerProps>) => {
   )
 }
 
-export default Randomizer;
+export default Randomizer
