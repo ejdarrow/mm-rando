@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import ItemListTextInput from './ItemListTextInput'
-import ItemPoolGrid from './ItemPoolGrid'
+import ItemMatrixView from './ItemMatrixView'
 import ItemQueryView from './ItemQueryView'
 import Slider from './Slider'
 import { RootState } from './store'
@@ -35,7 +35,7 @@ const ItemListContent = (props: ItemListContentProps) => {
     if (state.viewState === ViewState.Query) {
       return <ItemQueryView store={props.store} />
     } else if (state.viewState === ViewState.Matrix) {
-      return <ItemPoolGrid store={props.store} />
+      return <ItemMatrixView store={props.store} />
     }
   }
 

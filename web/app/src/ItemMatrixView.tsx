@@ -5,18 +5,18 @@ import { setItemPoolColumnCount } from './RootStyle'
 import { ItemListBitMask, getCellCheckedState, getColumnCheckedState, getRowCheckedState } from './common/ItemList'
 import { useAppDispatch, useAppSelector } from './hooks'
 import { ItemListStore } from './store/createItemListSlice'
-import './ItemPoolGrid.css'
+import './ItemMatrixView.css'
 
 const dataColumnAtt = 'data-column';
 const dataRowAtt = 'data-row';
 const dataHoveredColumnAtt = 'data-hovered-column';
 const dataHoveredRowAtt = 'data-hovered-row';
 
-interface ItemPoolGridProps {
+interface ItemMatrixViewProps {
   store: ItemListStore
 }
 
-const ItemPoolGrid = (props: ItemPoolGridProps) => {
+const ItemMatrixView = (props: ItemMatrixViewProps) => {
   const gridRootElement = useRef<HTMLDivElement>(null)
   const itemListRepr = useItemListRepr()
   const itemListBits = useAppSelector(state => props.store.selector(state))
@@ -208,4 +208,4 @@ const ItemPoolGrid = (props: ItemPoolGridProps) => {
   )
 }
 
-export default ItemPoolGrid;
+export default ItemMatrixView;
