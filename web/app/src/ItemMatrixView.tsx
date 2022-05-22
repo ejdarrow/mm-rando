@@ -2,7 +2,7 @@ import React, { useRef } from 'react'
 import { Checkbox } from './Checkbox'
 import { useItemListRepr } from './Randomizer'
 import { setItemPoolColumnCount } from './RootStyle'
-import { ItemListBitMask, getCellCheckedState, getColumnCheckedState, getRowCheckedState } from './common/ItemList'
+import { ItemListBitMask } from './common/ItemList'
 import { useAppDispatch, useAppSelector } from './hooks'
 import { ItemListStore } from './store/createItemListSlice'
 import './ItemMatrixView.css'
@@ -12,26 +12,32 @@ const dataRowAtt = 'data-row'
 const dataHoveredColumnAtt = 'data-hovered-column'
 const dataHoveredRowAtt = 'data-hovered-row'
 
-interface ItemMatrixViewProps {
+interface ItemListCounterProps {
   store: ItemListStore
 }
 
-const ItemMatrixView = (props: ItemMatrixViewProps) => {
-  const gridRootElement = useRef<HTMLDivElement>(null)
+const ItemListCounter = (props: ItemListCounterProps) => {
+  const enabledCount = useAppSelector(state => props.store.selector(state).getEnabledCount())
   const itemListRepr = useItemListRepr()
-  const itemListBits = useAppSelector(state => props.store.selector(state))
+  const totalCount = itemListRepr.items.length
+  const enabledPercentage = ((enabledCount / totalCount) * 100).toFixed(1)
+
+  return (
+    <span>
+      Randomized: {enabledCount} / {totalCount} ({enabledPercentage}%)
+    </span>
+  )
+}
+
+interface IdentityCheckboxProps {
+  store: ItemListStore
+}
+
+const IdentityCheckbox = (props: IdentityCheckboxProps) => {
+  const checkedState = useAppSelector(state => props.store.selector(state).getCheckedStateAll())
   const dispatch = useAppDispatch()
 
-  const dispatchBitMaskOperation = (operation: boolean, bitMask: ItemListBitMask) => {
-    if (operation) {
-      dispatch(props.store.slice.actions.maskSet(bitMask))
-    } else {
-      dispatch(props.store.slice.actions.maskClear(bitMask))
-    }
-  }
-
-  /// Handle clicking the "all" checkbox.
-  const handleAllCheckboxClick = (event: React.MouseEvent<HTMLInputElement>) => {
+  const onClick = (event: React.MouseEvent<HTMLInputElement>) => {
     const checked = event.currentTarget.checked
     if (checked) {
       dispatch(props.store.slice.actions.allSet())
@@ -40,26 +46,38 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
     }
   }
 
-  /// Handle clicking a cell checkbox.
-  const handleCellCheckboxClick = (event: React.MouseEvent<HTMLInputElement>, colIndex: number, rowIndex: number) => {
+  return <Checkbox value={checkedState} onClick={onClick} />
+}
+
+interface MaskCheckboxProps {
+  bitMask: ItemListBitMask
+  store: ItemListStore
+}
+
+const MaskCheckbox = (props: MaskCheckboxProps) => {
+  const checkedState = useAppSelector(state => props.store.selector(state).getCheckedState(props.bitMask))
+  const dispatch = useAppDispatch()
+
+  const onClick = (event: React.MouseEvent<HTMLInputElement>) => {
     const checked = event.currentTarget.checked
-    const cell = itemListRepr.matrix.get(colIndex, rowIndex)
-    dispatchBitMaskOperation(checked, cell.bitMask)
+    const bitMask = props.bitMask
+    if (checked) {
+      dispatch(props.store.slice.actions.maskSet(bitMask))
+    } else {
+      dispatch(props.store.slice.actions.maskClear(bitMask))
+    }
   }
 
-  /// Handle clicking a column checkbox.
-  const handleColumnCheckboxClick = (event: React.MouseEvent<HTMLInputElement>, colIndex: number) => {
-    const checked = event.currentTarget.checked
-    const column = itemListRepr.columns[colIndex]
-    dispatchBitMaskOperation(checked, column.bitMask)
-  }
+  return <Checkbox value={checkedState} onClick={onClick} />
+}
 
-  /// Handle clicking a row checkbox.
-  const handleRowCheckboxClick = (event: React.MouseEvent<HTMLInputElement>, rowIndex: number) => {
-    const checked = event.currentTarget.checked
-    const row = itemListRepr.rows[rowIndex]
-    dispatchBitMaskOperation(checked, row.bitMask)
-  }
+interface ItemMatrixViewProps {
+  store: ItemListStore
+}
+
+const ItemMatrixView = (props: ItemMatrixViewProps) => {
+  const gridRootElement = useRef<HTMLDivElement>(null)
+  const itemListRepr = useItemListRepr()
 
   const handleMouseOver = (event: React.MouseEvent) => {
     if (gridRootElement.current) {
@@ -97,20 +115,15 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
   }
 
   const renderGridCell = (colIndex: number, rowIndex: number) => {
-    const checkedState = getCellCheckedState(itemListBits, itemListRepr, colIndex, rowIndex)
-    if (checkedState !== undefined) {
-      return (
-        <Checkbox value={checkedState} onClick={(event) => handleCellCheckboxClick(event, colIndex, rowIndex)} />
-      )
+    if (itemListRepr.hasCell(colIndex, rowIndex)) {
+      const data = itemListRepr.matrix.get(colIndex, rowIndex)
+      return <MaskCheckbox store={props.store} bitMask={data.bitMask} />
     }
   }
 
   // TODO: Place in effect?
   updateColumnCountCSSVariable()
 
-  const enabledCount = itemListBits.getEnabledCount()
-  const totalCount = itemListRepr.items.length
-  const enabledPercentage = ((enabledCount / totalCount) * 100).toFixed(1)
   return (
     <>
       <div className="rando-itempool-root-container" ref={gridRootElement}>
@@ -120,9 +133,7 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
             <div className="rando-itempool-head">
               {/* Show randomized percentage. */}
               <div className="rando-itempool-topleft">
-                <span>
-                  Randomized: {enabledCount} / {totalCount} ({enabledPercentage}%)
-                </span>
+                <ItemListCounter store={props.store} />
               </div>
 
               {/* Column labels. */}
@@ -139,7 +150,7 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
               {/* "All" checkbox. */}
               <div className="rando-itempool-corner">
                 <div>
-                  <Checkbox value={itemListBits.getCheckedStateAll()} onClick={handleAllCheckboxClick} />
+                  <IdentityCheckbox store={props.store} />
                 </div>
               </div>
 
@@ -147,10 +158,7 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
               {itemListRepr.columns.map((col) => {
                 return (
                   <div className="rando-itempool-col-checkbox" key={'checkbox:' + col.index}>
-                    <Checkbox
-                      value={getColumnCheckedState(itemListBits, itemListRepr, col.index)}
-                      onClick={(event) => handleColumnCheckboxClick(event, col.index)}
-                    />
+                    <MaskCheckbox store={props.store} bitMask={col.bitMask} />
                   </div>
                 )
               })}
@@ -175,10 +183,7 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
                         <span>
                           {row.data.Name}: +{row.count}
                         </span>
-                        <Checkbox
-                          value={getRowCheckedState(itemListBits, itemListRepr, row.index)}
-                          onClick={(event) => handleRowCheckboxClick(event, row.index)}
-                        />
+                        <MaskCheckbox store={props.store} bitMask={row.bitMask} />
                       </label>
                     </div>
 

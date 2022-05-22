@@ -146,6 +146,11 @@ export class ItemListRepr {
     this.categoryGroups = categoryGroups;
   }
 
+  hasCell(colIndex: number, rowIndex: number) {
+    const cell = this.matrix.get(colIndex, rowIndex)
+    return cell !== undefined && cell.items.length > 0
+  }
+
   static fromJson(data: ItemPoolJson) {
     const columns = data.Columns.map((col, idx) => {
       return new ItemListColumnRepr(col, 0, idx);
