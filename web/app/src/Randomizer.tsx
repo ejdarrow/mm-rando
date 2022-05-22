@@ -31,8 +31,8 @@ const Randomizer = (props: React.PropsWithChildren<RandomizerProps>) => {
   const [state, setState] = useState<RandomizerState>()
   const dispatch = useDispatch()
 
-  // Fetch generator-specific JSON file. For now, just gets item list representation.
-  const fetchConfiguration = () => {
+  useEffect(() => {
+    // Fetch generator-specific JSON file. For now, just gets item list representation.
     api<UserInterfaceJson>('/ui.json').then((config) => {
       const grid = ItemListRepr.fromJson(config.ItemPool)
       setState({
@@ -43,10 +43,6 @@ const Randomizer = (props: React.PropsWithChildren<RandomizerProps>) => {
         length: grid.items.length
       }))
     })
-  }
-
-  useEffect(() => {
-    fetchConfiguration()
     return () => {
       // Cleanup state & store.
       setState({
@@ -54,7 +50,7 @@ const Randomizer = (props: React.PropsWithChildren<RandomizerProps>) => {
       })
       dispatch(itemPoolListSlice.actions.stateClear())
     }
-  }, [])
+  }, [dispatch])
 
   return (
     <ItemListReprContext.Provider value={state?.itemListRepr}>

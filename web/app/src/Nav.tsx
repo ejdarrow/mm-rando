@@ -22,7 +22,7 @@ class NavSection {
 
 interface NavProps {
   selected?: string;
-  onNavItemClick: (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>, identifier: string) => void;
+  onNavItemClick: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>, identifier: string) => void;
 }
 
 class Nav extends React.Component<NavProps> {
@@ -49,25 +49,23 @@ class Nav extends React.Component<NavProps> {
     if (this.isSelected(item.identifier)) {
       return (
         <li key={item.identifier}>
-          <a
+          <button
             className="font-semibold h-full py-1 block border-l-2 pl-4 -ml-2px border-transparent border-purple-500 text-purple-500"
-            href="#"
             onClick={(event) => this.props.onNavItemClick(event, item.identifier)}
           >
             {item.name}
-          </a>
+          </button>
         </li>
       );
     } else {
       return (
         <li key={item.identifier}>
-          <a
+          <button
             className="h-full py-1 block border-l-2 pl-4 -ml-2px border-transparent hover:border-neutral-300 hover:text-[#f8f8f8]"
-            href="#"
             onClick={(event) => this.props.onNavItemClick(event, item.identifier)}
           >
             {item.name}
-          </a>
+          </button>
         </li>
       );
     }
@@ -76,23 +74,21 @@ class Nav extends React.Component<NavProps> {
   renderRootNavItem(item: NavItem) {
     if (this.isSelected(item.identifier)) {
       return (
-        <a
+        <button
           className="block mb-8 lg:mb-3 font-semibold decoration-violet-500 underline"
-          href="#"
           onClick={(event) => this.props.onNavItemClick(event, item.identifier)}
         >
           {item.name}
-        </a>
+        </button>
       );
     } else {
       return (
-        <a
+        <button
           className="block mb-8 lg:mb-3 font-semibold decoration-neutral-500 hover:underline"
-          href="#"
           onClick={(event) => this.props.onNavItemClick(event, item.identifier)}
         >
           {item.name}
-        </a>
+        </button>
       );
     }
   }

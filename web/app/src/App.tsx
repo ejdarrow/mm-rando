@@ -17,7 +17,7 @@ const App = (props: AppProps) => {
     selectedIdentifier: 'randomizer'
   })
 
-  const handleNavItemClick = (event: React.MouseEvent<HTMLAnchorElement>, identifier: string) => {
+  const handleNavItemClick = (event: React.MouseEvent<HTMLButtonElement>, identifier: string) => {
     setState({
       selectedIdentifier: identifier
     })
@@ -28,11 +28,11 @@ const App = (props: AppProps) => {
   }
 
   const renderRightMostContent = () => {
-    if (state.selectedIdentifier == 'hud colors') {
+    if (state.selectedIdentifier === 'hud colors') {
       return <HUDScreen onClick={handleHUDScreenClick} />
     }
 
-    if (state.selectedIdentifier == 'item pool') {
+    if (state.selectedIdentifier === 'item pool') {
       return <ItemListContent title="Item Pool" allowMatrix={true} store={itemPoolListStore} />
     }
   }
