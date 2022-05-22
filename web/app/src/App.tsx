@@ -4,6 +4,7 @@ import ItemListContent from './ItemListContent'
 import Nav from './Nav'
 import Randomizer from './Randomizer'
 import { itemPoolListStore } from './store/itemPoolListSlice'
+import { junkLocationsListStore } from './store/junkLocationsListSlice'
 import './App.css'
 
 interface AppProps {}
@@ -34,6 +35,10 @@ const App = (props: AppProps) => {
 
     if (state.selectedIdentifier === 'item pool') {
       return <ItemListContent title="Item Pool" allowMatrix={true} store={itemPoolListStore} />
+    }
+
+    if (state.selectedIdentifier === 'junk locations') {
+      return <ItemListContent title='Junk Locations' allowMatrix={false} store={junkLocationsListStore} />
     }
   }
 

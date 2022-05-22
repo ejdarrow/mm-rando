@@ -50,7 +50,7 @@ const ItemListContent = (props: ItemListContentProps) => {
         <h1 className="font-semibold text-2xl pl-2">{props.title}</h1>
       </div>
       <div className="flex justify-center p-3">
-        <ItemListTextInput selector={(state: RootState) => state.itemPool.value.toString()}/>
+        <ItemListTextInput selector={(state: RootState) => props.store.selector(state).toString()}/>
       </div>
       <div>{renderView()}</div>
     </>

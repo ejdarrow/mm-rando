@@ -36,6 +36,9 @@ export const createItemListSlice = (id: string) => createSlice({
     },
     stateClear: state => {
       state.value = ItemListBits.empty()
+    },
+    withLength: (state, action: PayloadAction<number>) => {
+      state.value = ItemListBits.withLength(action.payload)
     }
   }
 })

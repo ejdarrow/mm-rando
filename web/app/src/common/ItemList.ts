@@ -1,4 +1,3 @@
-import { getPositionOfLineAndCharacter } from 'typescript';
 import { CheckedState } from './CheckedState';
 import { ItemListRepr } from './ConfigTypes';
 import { isHexString, tuple, u32 } from './Utility';
@@ -166,6 +165,10 @@ export class ItemListBitMask extends AbstractItemListBitMask {
 
     return new ItemListBitMask(chunkIndexes, Uint32Array.from(maskChunks));
   }
+}
+
+const getChunkCount = (length: number) => {
+  return Math.ceil(length / 32)
 }
 
 export class ItemListBits {
@@ -423,7 +426,7 @@ export class ItemListBits {
 
   static fromString(str: string, length: number) {
     const sections = str.split('-');
-    const chunkCount = Math.ceil(length / 32);
+    const chunkCount = getChunkCount(length);
     if (sections.length !== chunkCount) {
       throw Error(`Sections count does not match expected chunk count: ${sections.length} !== ${chunkCount}`);
     }
@@ -441,6 +444,11 @@ export class ItemListBits {
     const result = new ItemListBits(storage, length);
     result.validateTailChunk();
     return result;
+  }
+
+  static withLength(length: number) {
+    const chunkCount = getChunkCount(length)
+    return new ItemListBits(new Uint32Array(chunkCount), length)
   }
 }
 

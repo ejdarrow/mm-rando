@@ -4,6 +4,7 @@ import { api } from './common/Api'
 import { ItemListRepr } from './common/ConfigTypes'
 import { UserInterfaceJson } from './common/JsonTypes'
 import itemPoolListSlice from './store/itemPoolListSlice'
+import junkLocationsListSlice from './store/junkLocationsListSlice'
 
 const ItemListReprContext = React.createContext<ItemListRepr | undefined>(undefined)
 
@@ -35,13 +36,15 @@ const Randomizer = (props: React.PropsWithChildren<RandomizerProps>) => {
     // Fetch generator-specific JSON file. For now, just gets item list representation.
     api<UserInterfaceJson>('/ui.json').then((config) => {
       const grid = ItemListRepr.fromJson(config.ItemPool)
+      const itemCount = grid.items.length
       setState({
         itemListRepr: grid
       })
       dispatch(itemPoolListSlice.actions.fromString({
         value: itemListTestString,
-        length: grid.items.length
+        length: itemCount
       }))
+      dispatch(junkLocationsListSlice.actions.withLength(itemCount))
     })
     return () => {
       // Cleanup state & store.
@@ -49,6 +52,7 @@ const Randomizer = (props: React.PropsWithChildren<RandomizerProps>) => {
         itemListRepr: undefined
       })
       dispatch(itemPoolListSlice.actions.stateClear())
+      dispatch(junkLocationsListSlice.actions.stateClear())
     }
   }, [dispatch])
 
