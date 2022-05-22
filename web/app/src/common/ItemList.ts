@@ -1,6 +1,6 @@
 import { getPositionOfLineAndCharacter } from 'typescript';
 import { CheckedState } from './CheckedState';
-import { ItemPoolGridRepr } from './ConfigTypes';
+import { ItemListRepr } from './ConfigTypes';
 import { isHexString, tuple, u32 } from './Utility';
 
 abstract class AbstractItemListBitMask implements Iterable<[number, number]> {
@@ -444,17 +444,17 @@ export class ItemListBits {
   }
 }
 
-export const getCellCheckedState = (list: ItemListBits, repr: ItemPoolGridRepr, colIndex: number, rowIndex: number) => {
+export const getCellCheckedState = (list: ItemListBits, repr: ItemListRepr, colIndex: number, rowIndex: number) => {
   const cell = repr.matrix.get(colIndex, rowIndex)
   if (cell !== undefined && cell.items.length > 0) {
     return list.getCheckedState(cell.bitMask)
   }
 }
 
-export const getColumnCheckedState = (list: ItemListBits, repr: ItemPoolGridRepr, colIndex: number) => {
+export const getColumnCheckedState = (list: ItemListBits, repr: ItemListRepr, colIndex: number) => {
   return list.getCheckedState(repr.columns[colIndex].bitMask)
 }
 
-export const getRowCheckedState = (list: ItemListBits, repr: ItemPoolGridRepr, rowIndex: number) => {
+export const getRowCheckedState = (list: ItemListBits, repr: ItemListRepr, rowIndex: number) => {
   return list.getCheckedState(repr.rows[rowIndex].bitMask)
 }

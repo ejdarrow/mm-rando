@@ -1,4 +1,4 @@
-import { ItemPoolColumnRepr, ItemPoolItemRepr, ItemPoolRowRepr } from './ConfigTypes';
+import { ItemListColumnRepr, ItemRepr, ItemListRowRepr } from './ConfigTypes';
 import { ExMap } from './ExMap';
 import { ItemListBitMask } from './ItemList';
 import { CompareFn, coalesceUndef, tuple } from './Utility';
@@ -9,11 +9,11 @@ export enum CategoryType {
 }
 
 export class CategoryGroupBuilder {
-  categoryGroups: Map<string, ItemPoolItemRepr[]>;
-  orphaned?: ItemPoolItemRepr[];
+  categoryGroups: Map<string, ItemRepr[]>;
+  orphaned?: ItemRepr[];
 
-  constructor(categoryGroups?: Map<string, ItemPoolItemRepr[]>, orphaned?: ItemPoolItemRepr[]) {
-    this.categoryGroups = categoryGroups ?? new Map<string, ItemPoolItemRepr[]>();
+  constructor(categoryGroups?: Map<string, ItemRepr[]>, orphaned?: ItemRepr[]) {
+    this.categoryGroups = categoryGroups ?? new Map<string, ItemRepr[]>();
     this.orphaned = orphaned;
   }
 
@@ -53,7 +53,7 @@ export class CategoryGroupContainerBuilder {
   }
 
   /// Append an item to a CategoryGroupBuilder.
-  append(categoryType: CategoryType, categoryValue: string, value: ItemPoolItemRepr) {
+  append(categoryType: CategoryType, categoryValue: string, value: ItemRepr) {
     let categoryValueMap = this.createCategoryGroupBuilder(categoryType);
 
     if (categoryValueMap?.groups().get(categoryValue) === undefined) {
@@ -64,7 +64,7 @@ export class CategoryGroupContainerBuilder {
   }
 
   /// Append an orphaned item to a CategoryGroupBuilder.
-  appendOrphan(categoryType: CategoryType, value: ItemPoolItemRepr) {
+  appendOrphan(categoryType: CategoryType, value: ItemRepr) {
     let categoryGroupBuilder = this.createCategoryGroupBuilder(categoryType);
     if (categoryGroupBuilder.orphaned === undefined) {
       categoryGroupBuilder.orphaned = [value];
@@ -74,7 +74,7 @@ export class CategoryGroupContainerBuilder {
   }
 
   /// Append an item based on Location type.
-  appendByLocationType(column: ItemPoolColumnRepr | null, item: ItemPoolItemRepr) {
+  appendByLocationType(column: ItemListColumnRepr | null, item: ItemRepr) {
     const categoryType = CategoryType.Location;
     if (column !== null) {
       this.append(categoryType, column.data.Name, item);
@@ -84,7 +84,7 @@ export class CategoryGroupContainerBuilder {
   }
 
   /// Append an item based on Item type.
-  appendByItemType(row: ItemPoolRowRepr | null, item: ItemPoolItemRepr) {
+  appendByItemType(row: ItemListRowRepr | null, item: ItemRepr) {
     const categoryType = CategoryType.Item;
     if (row !== null) {
       this.append(categoryType, row.data.Name, item);
@@ -185,11 +185,11 @@ export class CategoryGroup {
 
 /// Collection of items with a corresponding bit mask.
 export class ItemGroup {
-  items: ItemPoolItemRepr[];
+  items: ItemRepr[];
   bitMask: ItemListBitMask;
 
-  constructor(items: ItemPoolItemRepr[], bitMask: ItemListBitMask) {
-    this.items = items.sort(ItemPoolItemRepr.compare);
+  constructor(items: ItemRepr[], bitMask: ItemListBitMask) {
+    this.items = items.sort(ItemRepr.compare);
     this.bitMask = bitMask;
   }
 
@@ -208,7 +208,7 @@ export class ItemGroup {
     return ItemGroup.fromItems(filteredItems);
   }
 
-  static fromItems(items: ItemPoolItemRepr[]) {
+  static fromItems(items: ItemRepr[]) {
     const bitMask = ItemListBitMask.fromBits(items.map((x) => x.index));
     return new ItemGroup(items, bitMask);
   }

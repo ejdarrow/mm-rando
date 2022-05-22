@@ -3,12 +3,12 @@ import { ItemPoolJson, ItemPoolColumnJson, ItemPoolRowJson } from './JsonTypes';
 import { ItemListBitMask } from './ItemList';
 import { CategoryGroupContainer, CategoryGroupContainerBuilder } from './ItemCategory';
 
-export class ItemGridVector<T> {
+export class ItemMatrixVector<T> {
   data: Readonly<T>;
   count: number;
   index: number;
   bitMask: ItemListBitMask;
-  orphaned: ItemPoolItemRepr[];
+  orphaned: ItemRepr[];
 
   constructor(data: T, count: number, index: number) {
     this.data = data;
@@ -19,19 +19,19 @@ export class ItemGridVector<T> {
   }
 }
 
-export class ItemPoolColumnRepr extends ItemGridVector<ItemPoolColumnJson> {
+export class ItemListColumnRepr extends ItemMatrixVector<ItemPoolColumnJson> {
   getKey() {
     return 'location_type:' + this.data.Category;
   }
 }
 
-export class ItemPoolRowRepr extends ItemGridVector<ItemPoolRowJson> {
+export class ItemListRowRepr extends ItemMatrixVector<ItemPoolRowJson> {
   getKey() {
     return 'item_type:' + this.data.Category;
   }
 }
 
-export class ItemPoolItemRepr {
+export class ItemRepr {
   index: number;
   columnIndex: number;
   rowIndex: number;
@@ -47,16 +47,16 @@ export class ItemPoolItemRepr {
   }
 
   /// Compare two items by location name.
-  static compare(a: ItemPoolItemRepr, b: ItemPoolItemRepr) {
+  static compare(a: ItemRepr, b: ItemRepr) {
     return a.locationName.localeCompare(b.locationName);
   }
 }
 
 class ItemMatrixCell {
-  readonly items: ItemPoolItemRepr[];
+  readonly items: ItemRepr[];
   bitMask: ItemListBitMask;
 
-  constructor(items?: ItemPoolItemRepr[], bitMask?: ItemListBitMask) {
+  constructor(items?: ItemRepr[], bitMask?: ItemListBitMask) {
     this.items = items ?? [];
     this.bitMask = bitMask ?? ItemListBitMask.empty();
   }
@@ -69,7 +69,7 @@ class ItemMatrixCell {
 
 class ItemMatrix extends Matrix<ItemMatrixCell> {
   /// Create an ItemListBitMask for a given grid vector (column or row).
-  createVectorBitMask<T>(vector: ItemGridVector<T>, generator: Generator<ItemMatrixCell>) {
+  createVectorBitMask<T>(vector: ItemMatrixVector<T>, generator: Generator<ItemMatrixCell>) {
     const array = Array<ItemListBitMask>();
     for (let cell of generator) {
       // Push matrix cell bit mask.
@@ -83,15 +83,15 @@ class ItemMatrix extends Matrix<ItemMatrixCell> {
     return ItemListBitMask.bitwiseOrAll(array.filter((x) => x !== undefined));
   }
 
-  createColumnBitMask(column: ItemPoolColumnRepr) {
+  createColumnBitMask(column: ItemListColumnRepr) {
     return this.createVectorBitMask(column, this.getColumnGenerator(column.index));
   }
 
-  createRowBitMask(row: ItemPoolRowRepr) {
+  createRowBitMask(row: ItemListRowRepr) {
     return this.createVectorBitMask(row, this.getRowGenerator(row.index));
   }
 
-  push(value: ItemPoolItemRepr, colIndex: number, rowIndex: number) {
+  push(value: ItemRepr, colIndex: number, rowIndex: number) {
     const index = this.calcFlatIndex(colIndex, rowIndex);
     if (this.data[index] === undefined) {
       this.data[index] = new ItemMatrixCell();
@@ -99,7 +99,7 @@ class ItemMatrix extends Matrix<ItemMatrixCell> {
     return this.data[index].items.push(value);
   }
 
-  updateBitMasks(columnReprs: ItemPoolColumnRepr[], rowReprs: ItemPoolRowRepr[]) {
+  updateBitMasks(columnReprs: ItemListColumnRepr[], rowReprs: ItemListRowRepr[]) {
     this.updateCellBitMasks();
     for (let i = 0; i < this.colCount; i++) {
       columnReprs[i].bitMask = this.createColumnBitMask(columnReprs[i]);
@@ -119,12 +119,12 @@ class ItemMatrix extends Matrix<ItemMatrixCell> {
   }
 }
 
-export class ItemPoolGridRepr {
-  columns: ItemPoolColumnRepr[];
-  rows: ItemPoolRowRepr[];
+export class ItemListRepr {
+  columns: ItemListColumnRepr[];
+  rows: ItemListRowRepr[];
 
   /// Item flat array representation indexed by item integer value.
-  items: ItemPoolItemRepr[];
+  items: ItemRepr[];
 
   /// Item grid representation using location category and item category as axies.
   matrix: ItemMatrix;
@@ -133,9 +133,9 @@ export class ItemPoolGridRepr {
   categoryGroups: CategoryGroupContainer;
 
   constructor(
-    columns: ItemPoolColumnRepr[],
-    rows: ItemPoolRowRepr[],
-    items: ItemPoolItemRepr[],
+    columns: ItemListColumnRepr[],
+    rows: ItemListRowRepr[],
+    items: ItemRepr[],
     matrix: ItemMatrix,
     categoryGroups: CategoryGroupContainer
   ) {
@@ -148,14 +148,14 @@ export class ItemPoolGridRepr {
 
   static fromJson(data: ItemPoolJson) {
     const columns = data.Columns.map((col, idx) => {
-      return new ItemPoolColumnRepr(col, 0, idx);
+      return new ItemListColumnRepr(col, 0, idx);
     });
     const rows = data.Rows.map((row, idx) => {
-      return new ItemPoolRowRepr(row, 0, idx);
+      return new ItemListRowRepr(row, 0, idx);
     });
 
     // Flat item array representation.
-    const items = Array<ItemPoolItemRepr>(data.Items.length);
+    const items = Array<ItemRepr>(data.Items.length);
 
     // Matrix representation.
     const matrix = new ItemMatrix(columns.length, rows.length);
@@ -173,7 +173,7 @@ export class ItemPoolGridRepr {
       const column = colIdx >= 0 ? columns[colIdx] : null;
       const row = rowIdx >= 0 ? rows[rowIdx] : null;
 
-      const item = new ItemPoolItemRepr(x.Index, colIdx, rowIdx, x.ItemName, x.LocationName);
+      const item = new ItemRepr(x.Index, colIdx, rowIdx, x.ItemName, x.LocationName);
 
       // Ensure that item index is in bounds and non-duplicate.
       if (item.index < 0 || item.index >= items.length) {
@@ -220,6 +220,6 @@ export class ItemPoolGridRepr {
     // Complete into CategoryGroupContainer.
     const categoryGroupContainer = categoryGroupBuilder.complete();
 
-    return new ItemPoolGridRepr(columns, rows, items, matrix, categoryGroupContainer);
+    return new ItemListRepr(columns, rows, items, matrix, categoryGroupContainer);
   }
 }

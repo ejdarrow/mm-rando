@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { api } from './common/Api'
-import { ItemPoolGridRepr } from './common/ConfigTypes'
+import { ItemListRepr } from './common/ConfigTypes'
 import { UserInterfaceJson } from './common/JsonTypes'
 import itemPoolListSlice from './store/itemPoolListSlice'
 
-const ItemListReprContext = React.createContext<ItemPoolGridRepr | undefined>(undefined);
+const ItemListReprContext = React.createContext<ItemListRepr | undefined>(undefined);
 
 export const useContextOrError = <T,>(context: React.Context<T | undefined>): T => {
   const result = React.useContext(context)
@@ -24,7 +24,7 @@ const itemListTestString =
 interface RandomizerProps {}
 
 class RandomizerState {
-  itemListRepr?: ItemPoolGridRepr
+  itemListRepr?: ItemListRepr
 }
 
 const Randomizer = (props: React.PropsWithChildren<RandomizerProps>) => {
@@ -34,7 +34,7 @@ const Randomizer = (props: React.PropsWithChildren<RandomizerProps>) => {
   // Fetch generator-specific JSON file. For now, just gets item list representation.
   const fetchConfiguration = () => {
     api<UserInterfaceJson>('/ui.json').then((config) => {
-      const grid = ItemPoolGridRepr.fromJson(config.ItemPool)
+      const grid = ItemListRepr.fromJson(config.ItemPool)
       setState({
         itemListRepr: grid
       })
