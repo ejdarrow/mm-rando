@@ -1,4 +1,6 @@
+import { getPositionOfLineAndCharacter } from 'typescript';
 import { CheckedState } from './CheckedState';
+import { ItemPoolGridRepr } from './ConfigTypes';
 import { isHexString, tuple, u32 } from './Utility';
 
 abstract class AbstractItemListBitMask implements Iterable<[number, number]> {
@@ -10,6 +12,26 @@ abstract class AbstractItemListBitMask implements Iterable<[number, number]> {
     for (let i = 0; i < this.length(); i++) {
       yield this.at(i);
     }
+  }
+
+  /// NOTE: This assumes both (index => value) mappings are sorted by index.
+  equals(other: AbstractItemListBitMask) {
+    if (this.length() !== other.length()) {
+      return false;
+    }
+
+    for (let i = 0; i < this.length(); i++) {
+      const [ourIndex, ourValue] = this.at(i);
+      const [otherIndex, otherValue] = other.at(i);
+      if (ourIndex !== otherIndex) {
+        return false;
+      }
+      if (ourValue !== otherValue) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }
 
@@ -85,6 +107,15 @@ export class ItemListBitMask extends AbstractItemListBitMask {
     return new ItemListBitMaskMut(Array.from(this.chunkIndexes), Array.from(this.maskChunks));
   }
 
+  isEmpty() {
+    for (const value of this.maskChunks) {
+      if (value !== 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /// Merge multiple bit masks using bitwise OR and return the result.
   static bitwiseOrAll(bitMasks: ItemListBitMask[]) {
     if (bitMasks.length <= 0) {
@@ -109,6 +140,10 @@ export class ItemListBitMask extends AbstractItemListBitMask {
   static fromBits(bitIndexes: number[]) {
     const maskChunks = Array<number>();
     const chunkIndexes = Array<number>();
+
+    // Sort the bit indexes, which should result in a sorted chunk index array.
+    // We need to do this for efficient comparison later on.
+    bitIndexes = bitIndexes.sort((a, b) => a - b);
 
     for (let i = 0; i < bitIndexes.length; i++) {
       const bitIndex = bitIndexes[i];
@@ -144,6 +179,20 @@ export class ItemListBits {
     this.identity = this.createIdentityMask();
   }
 
+  clone() {
+    return new ItemListBits(Uint32Array.from(this.storage), this.length);
+  }
+
+  /// Return the resulting `ItemListBitMask` from an AND operation.
+  and(bitMask: ItemListBitMask) {
+    const clonedMask = bitMask.clone();
+    for (var i = 0; i < clonedMask.length(); i++) {
+      const chunkIndex = clonedMask.chunkIndexes[i];
+      clonedMask.maskChunks[i] &= this.storage[chunkIndex];
+    }
+    return clonedMask;
+  }
+
   /// Apply a bit mask using bitwise OR.
   applyMaskOr(bitMask: ItemListBitMask) {
     for (let [chunkIndex, maskChunk] of bitMask) {
@@ -151,11 +200,39 @@ export class ItemListBits {
     }
   }
 
+  applyMaskOrImmut(bitMask: ItemListBitMask) {
+    if (!this.and(bitMask).equals(bitMask)) {
+      const clone = this.clone();
+      clone.applyMaskOr(bitMask);
+      return clone;
+    }
+    return this;
+  }
+
   /// Apply a bit mask using bitwise AND, NOT.
   applyMaskNot(bitMask: ItemListBitMask) {
     for (let [chunkIndex, maskChunk] of bitMask) {
       this.storage[chunkIndex] &= ~maskChunk;
     }
+  }
+
+  applyMaskNotImmut(bitMask: ItemListBitMask) {
+    if (!this.and(bitMask).isEmpty()) {
+      const clone = this.clone();
+      clone.applyMaskNot(bitMask);
+      return clone;
+    }
+    return this;
+  }
+
+  /// Return the resulting `ItemListBitMask` from a XOR operation.
+  xor(bitMask: ItemListBitMask) {
+    const clonedMask = bitMask.clone();
+    for (var i = 0; i < clonedMask.length(); i++) {
+      const chunkIndex = clonedMask.chunkIndexes[i];
+      clonedMask.maskChunks[i] ^= (this.storage[chunkIndex] & bitMask.maskChunks[i]);
+    }
+    return clonedMask;
   }
 
   /// Create a bit mask which represents all potential bits in storage.
@@ -228,13 +305,47 @@ export class ItemListBits {
     this.storage[chunk] &= ~((1 << shift) >>> 0) >>> 0;
   }
 
+  /// Clear a bit "immutably", returning a copy of the `ItemListBits`. If no change occurred, will return `this`.
+  clearBitImmut(index: number) {
+    const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
+    if (this.hasBitRaw(chunk, shift)) {
+      const clone = this.clone();
+      clone.clearBitInternal(chunk, shift);
+      return clone;
+    }
+    return this;
+  }
+
+  clearBitInternal(chunk: number, shift: number) {
+    this.storage[chunk] &= ~((1 << shift) >>> 0) >>> 0;
+  }
+
   hasBit(index: number) {
     const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
-    return ((this.storage[chunk] >>> shift) & 1) == 1;
+    return this.hasBitRaw(chunk, shift);
+  }
+
+  hasBitRaw(chunk: number, shift: number) {
+    return ((this.storage[chunk] >>> shift) & 1) === 1;
   }
 
   setBit(index: number) {
     const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
+    this.storage[chunk] |= (1 << shift) >>> 0;
+  }
+
+  /// Set a bit "immutably", returning a copy of the `ItemListBits`. If no change occurred, will return `this`.
+  setBitImmut(index: number) {
+    const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
+    if (!this.hasBitRaw(chunk, shift)) {
+      const clone = this.clone();
+      clone.setBitInternal(chunk, shift);
+      return clone;
+    }
+    return this;
+  }
+
+  setBitInternal(chunk: number, shift: number) {
     this.storage[chunk] |= (1 << shift) >>> 0;
   }
 
@@ -266,11 +377,23 @@ export class ItemListBits {
     }
   }
 
+  setAllImmut() {
+    const clone = this.clone();
+    clone.setAll();
+    return clone;
+  }
+
   /// Set all bits to 0.
   setNone() {
     for (let i = 0; i < this.storage.length; i++) {
       this.storage[i] = 0;
     }
+  }
+
+  setNoneImmut() {
+    const clone = this.clone();
+    clone.setNone();
+    return clone;
   }
 
   toString() {
@@ -294,6 +417,10 @@ export class ItemListBits {
     return tuple(chunk, shift);
   }
 
+  static empty() {
+    return new ItemListBits(new Uint32Array(), 0);
+  }
+
   static fromString(str: string, length: number) {
     const sections = str.split('-');
     const chunkCount = Math.ceil(length / 32);
@@ -315,4 +442,19 @@ export class ItemListBits {
     result.validateTailChunk();
     return result;
   }
+}
+
+export const getCellCheckedState = (list: ItemListBits, repr: ItemPoolGridRepr, colIndex: number, rowIndex: number) => {
+  const cell = repr.matrix.get(colIndex, rowIndex)
+  if (cell !== undefined && cell.items.length > 0) {
+    return list.getCheckedState(cell.bitMask)
+  }
+}
+
+export const getColumnCheckedState = (list: ItemListBits, repr: ItemPoolGridRepr, colIndex: number) => {
+  return list.getCheckedState(repr.columns[colIndex].bitMask)
+}
+
+export const getRowCheckedState = (list: ItemListBits, repr: ItemPoolGridRepr, rowIndex: number) => {
+  return list.getCheckedState(repr.rows[rowIndex].bitMask)
 }

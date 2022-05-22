@@ -1,8 +1,11 @@
-import React from 'react';
-import { Checkbox } from './Checkbox';
-import { ItemPoolState } from './common/ConfigTypes';
-import { setItemPoolColumnCount } from './RootStyle';
-import './ItemPoolGrid.css';
+import React, { useRef } from 'react'
+import { Checkbox } from './Checkbox'
+import { useItemListRepr } from './Randomizer'
+import { setItemPoolColumnCount } from './RootStyle'
+import { ItemListBitMask, getCellCheckedState, getColumnCheckedState, getRowCheckedState } from './common/ItemList'
+import { useAppDispatch, useAppSelector } from './hooks'
+import { ItemListStore } from './store/createItemListSlice'
+import './ItemPoolGrid.css'
 
 const dataColumnAtt = 'data-column';
 const dataRowAtt = 'data-row';
@@ -10,206 +13,199 @@ const dataHoveredColumnAtt = 'data-hovered-column';
 const dataHoveredRowAtt = 'data-hovered-row';
 
 interface ItemPoolGridProps {
-  data: ItemPoolState;
-  onStateChange?: () => void;
+  store: ItemListStore
 }
 
-class ItemPoolGrid extends React.Component<ItemPoolGridProps> {
-  gridRootElement: React.RefObject<HTMLDivElement>;
+const ItemPoolGrid = (props: ItemPoolGridProps) => {
+  const gridRootElement = useRef<HTMLDivElement>(null)
+  const itemListRepr = useItemListRepr()
+  const itemListBits = useAppSelector(state => props.store.selector(state))
+  const dispatch = useAppDispatch()
 
-  constructor(props: ItemPoolGridProps) {
-    super(props);
-    this.gridRootElement = React.createRef<HTMLDivElement>();
-  }
-
-  triggerStateChange() {
-    if (this.props.onStateChange) this.props.onStateChange();
+  const dispatchBitMaskOperation = (operation: boolean, bitMask: ItemListBitMask) => {
+    if (operation) {
+      dispatch(props.store.slice.actions.maskSet(bitMask))
+    } else {
+      dispatch(props.store.slice.actions.maskClear(bitMask))
+    }
   }
 
   /// Handle clicking the "all" checkbox.
-  handleAllCheckboxClick = (event: React.MouseEvent<HTMLInputElement>) => {
-    const checked = event.currentTarget.checked;
+  const handleAllCheckboxClick = (event: React.MouseEvent<HTMLInputElement>) => {
+    const checked = event.currentTarget.checked
     if (checked) {
-      this.props.data.list.setAll();
+      dispatch(props.store.slice.actions.allSet())
     } else {
-      this.props.data.list.setNone();
+      dispatch(props.store.slice.actions.allClear())
     }
-    this.forceUpdate();
-    this.triggerStateChange();
-  };
+  }
 
   /// Handle clicking a cell checkbox.
-  handleCellCheckboxClick = (event: React.MouseEvent<HTMLInputElement>, colIndex: number, rowIndex: number) => {
-    const checked = event.currentTarget.checked;
-    const cell = this.props.data.repr.matrix.get(colIndex, rowIndex);
-    this.props.data.applyBitOperation(checked, cell.bitMask);
-    this.forceUpdate();
-    this.triggerStateChange();
-  };
+  const handleCellCheckboxClick = (event: React.MouseEvent<HTMLInputElement>, colIndex: number, rowIndex: number) => {
+    const checked = event.currentTarget.checked
+    const cell = itemListRepr.matrix.get(colIndex, rowIndex)
+    dispatchBitMaskOperation(checked, cell.bitMask)
+  }
 
   /// Handle clicking a column checkbox.
-  handleColumnCheckboxClick = (event: React.MouseEvent<HTMLInputElement>, colIndex: number) => {
-    const checked = event.currentTarget.checked;
-    const column = this.props.data.repr.columns[colIndex];
-    this.props.data.applyBitOperation(checked, column.bitMask);
-    this.forceUpdate();
-    this.triggerStateChange();
-  };
+  const handleColumnCheckboxClick = (event: React.MouseEvent<HTMLInputElement>, colIndex: number) => {
+    const checked = event.currentTarget.checked
+    const column = itemListRepr.columns[colIndex]
+    dispatchBitMaskOperation(checked, column.bitMask)
+  }
 
   /// Handle clicking a row checkbox.
-  handleRowCheckboxClick = (event: React.MouseEvent<HTMLInputElement>, rowIndex: number) => {
-    const checked = event.currentTarget.checked;
-    const row = this.props.data.repr.rows[rowIndex];
-    this.props.data.applyBitOperation(checked, row.bitMask);
-    this.forceUpdate();
-    this.triggerStateChange();
-  };
+  const handleRowCheckboxClick = (event: React.MouseEvent<HTMLInputElement>, rowIndex: number) => {
+    const checked = event.currentTarget.checked
+    const row = itemListRepr.rows[rowIndex]
+    dispatchBitMaskOperation(checked, row.bitMask)
+  }
 
-  handleMouseOver = (event: React.MouseEvent) => {
-    if (this.gridRootElement.current) {
-      this.updateHoveredAddress(event.currentTarget as HTMLElement);
+  const handleMouseOver = (event: React.MouseEvent) => {
+    if (gridRootElement.current) {
+      updateHoveredAddress(event.currentTarget as HTMLElement)
     }
-  };
+  }
 
-  handleMouseOut = (event: React.MouseEvent) => {
-    if (this.gridRootElement.current) {
-      this.removeHoveredAddress();
+  const handleMouseOut = (event: React.MouseEvent) => {
+    if (gridRootElement.current) {
+      removeHoveredAddress()
     }
-  };
+  }
 
   /// Clear grid root attributes for hover.
-  removeHoveredAddress() {
-    this.gridRootElement.current?.removeAttribute(dataHoveredColumnAtt);
-    this.gridRootElement.current?.removeAttribute(dataHoveredRowAtt);
+  const removeHoveredAddress = () => {
+    gridRootElement.current?.removeAttribute(dataHoveredColumnAtt)
+    gridRootElement.current?.removeAttribute(dataHoveredRowAtt)
   }
 
   /// Update grid root attributes for which column and/or row is being hovered over.
-  updateHoveredAddress(cellElement: HTMLElement) {
-    const columnAttr = cellElement.getAttribute(dataColumnAtt);
-    const rowAttr = cellElement.getAttribute(dataRowAtt);
+  const updateHoveredAddress = (cellElement: HTMLElement) => {
+    const columnAttr = cellElement.getAttribute(dataColumnAtt)
+    const rowAttr = cellElement.getAttribute(dataRowAtt)
     if (columnAttr) {
-      this.gridRootElement.current?.setAttribute(dataHoveredColumnAtt, columnAttr);
+      gridRootElement.current?.setAttribute(dataHoveredColumnAtt, columnAttr)
     }
     if (rowAttr) {
-      this.gridRootElement.current?.setAttribute(dataHoveredRowAtt, rowAttr);
+      gridRootElement.current?.setAttribute(dataHoveredRowAtt, rowAttr)
     }
   }
 
   /// Update the CSS global variable for the item grid column count.
-  updateColumnCountCSSVariable() {
-    setItemPoolColumnCount(this.props.data.repr.columns.length);
+  const updateColumnCountCSSVariable = () => {
+    setItemPoolColumnCount(itemListRepr.columns.length)
   }
 
-  renderGridCell(colIndex: number, rowIndex: number) {
-    const checkedState = this.props.data.getCellCheckedState(colIndex, rowIndex);
+  const renderGridCell = (colIndex: number, rowIndex: number) => {
+    const checkedState = getCellCheckedState(itemListBits, itemListRepr, colIndex, rowIndex)
     if (checkedState !== undefined) {
       return (
-        <Checkbox value={checkedState} onClick={(event) => this.handleCellCheckboxClick(event, colIndex, rowIndex)} />
-      );
+        <Checkbox value={checkedState} onClick={(event) => handleCellCheckboxClick(event, colIndex, rowIndex)} />
+      )
     }
   }
 
-  render() {
-    this.updateColumnCountCSSVariable();
-    const enabledCount = this.props.data.list.getEnabledCount();
-    const totalCount = this.props.data.repr.items.length;
-    const enabledPercentage = ((enabledCount / totalCount) * 100).toFixed(1);
-    return (
-      <>
-        <div className="rando-itempool-root-container" ref={this.gridRootElement}>
-          {/* Grid head. */}
-          <div className="rando-itempool-head-container">
-            <div className="rando-itempool-head-scroll-container">
-              <div className="rando-itempool-head">
-                {/* Show randomized percentage. */}
-                <div className="rando-itempool-topleft">
-                  <span>
-                    Randomized: {enabledCount} / {totalCount} ({enabledPercentage}%)
-                  </span>
-                </div>
+  // TODO: Place in effect?
+  updateColumnCountCSSVariable()
 
-                {/* Column labels. */}
-                {this.props.data.repr.columns.map((col) => {
-                  return (
-                    <div className="rando-itempool-label-v" key={'label:' + col.index}>
-                      <span>
-                        {col.data.Name}: +{col.count}
-                      </span>
-                    </div>
-                  );
-                })}
-
-                {/* "All" checkbox. */}
-                <div className="rando-itempool-corner">
-                  <div>
-                    <Checkbox value={this.props.data.list.getCheckedStateAll()} onClick={this.handleAllCheckboxClick} />
-                  </div>
-                </div>
-
-                {/* Column checkboxes. */}
-                {this.props.data.repr.columns.map((col) => {
-                  return (
-                    <div className="rando-itempool-col-checkbox" key={'checkbox:' + col.index}>
-                      <Checkbox
-                        value={this.props.data.getColumnCheckedState(col.index)}
-                        onClick={(event) => this.handleColumnCheckboxClick(event, col.index)}
-                      />
-                    </div>
-                  );
-                })}
+  const enabledCount = itemListBits.getEnabledCount();
+  const totalCount = itemListRepr.items.length;
+  const enabledPercentage = ((enabledCount / totalCount) * 100).toFixed(1);
+  return (
+    <>
+      <div className="rando-itempool-root-container" ref={gridRootElement}>
+        {/* Grid head. */}
+        <div className="rando-itempool-head-container">
+          <div className="rando-itempool-head-scroll-container">
+            <div className="rando-itempool-head">
+              {/* Show randomized percentage. */}
+              <div className="rando-itempool-topleft">
+                <span>
+                  Randomized: {enabledCount} / {totalCount} ({enabledPercentage}%)
+                </span>
               </div>
-              <div></div>
-              <div className="hidden-vertical-scrollbar"></div>
+
+              {/* Column labels. */}
+              {itemListRepr.columns.map((col) => {
+                return (
+                  <div className="rando-itempool-label-v" key={'label:' + col.index}>
+                    <span>
+                      {col.data.Name}: +{col.count}
+                    </span>
+                  </div>
+                );
+              })}
+
+              {/* "All" checkbox. */}
+              <div className="rando-itempool-corner">
+                <div>
+                  <Checkbox value={itemListBits.getCheckedStateAll()} onClick={handleAllCheckboxClick} />
+                </div>
+              </div>
+
+              {/* Column checkboxes. */}
+              {itemListRepr.columns.map((col) => {
+                return (
+                  <div className="rando-itempool-col-checkbox" key={'checkbox:' + col.index}>
+                    <Checkbox
+                      value={getColumnCheckedState(itemListBits, itemListRepr, col.index)}
+                      onClick={(event) => handleColumnCheckboxClick(event, col.index)}
+                    />
+                  </div>
+                );
+              })}
             </div>
             <div></div>
-            <div></div>
+            <div className="hidden-vertical-scrollbar"></div>
           </div>
+          <div></div>
+          <div></div>
+        </div>
 
-          {/* Grid body. */}
-          <div className="rando-itempool-body-container">
-            <div className="rando-itempool-body-scroll-container">
-              <div className="rando-itempool-body">
-                {this.props.data.repr.rows.map((row) => {
-                  return (
-                    <div className="rando-itempool-row" key={row.index}>
-                      {/* Row label. */}
-                      <div className="rando-itempool-label-h">
-                        <label data-row={row.index} onMouseOver={this.handleMouseOver} onMouseOut={this.handleMouseOut}>
-                          <span>
-                            {row.data.Name}: +{row.count}
-                          </span>
-                          <Checkbox
-                            value={this.props.data.getRowCheckedState(row.index)}
-                            onClick={(event) => this.handleRowCheckboxClick(event, row.index)}
-                          />
-                        </label>
-                      </div>
-
-                      {/* Grid cells. */}
-                      {this.props.data.repr.columns.map((column) => {
-                        return (
-                          <div
-                            className="rando-itempool-cell"
-                            data-column={column.index}
-                            data-row={row.index}
-                            key={row.index + ',' + column.index}
-                            onMouseOver={this.handleMouseOver}
-                            onMouseOut={this.handleMouseOut}
-                          >
-                            {this.renderGridCell(column.index, row.index)}
-                          </div>
-                        );
-                      })}
+        {/* Grid body. */}
+        <div className="rando-itempool-body-container">
+          <div className="rando-itempool-body-scroll-container">
+            <div className="rando-itempool-body">
+              {itemListRepr.rows.map((row) => {
+                return (
+                  <div className="rando-itempool-row" key={row.index}>
+                    {/* Row label. */}
+                    <div className="rando-itempool-label-h">
+                      <label data-row={row.index} onMouseOver={handleMouseOver} onMouseOut={handleMouseOut}>
+                        <span>
+                          {row.data.Name}: +{row.count}
+                        </span>
+                        <Checkbox
+                          value={getRowCheckedState(itemListBits, itemListRepr, row.index)}
+                          onClick={(event) => handleRowCheckboxClick(event, row.index)}
+                        />
+                      </label>
                     </div>
-                  );
-                })}
-              </div>
+
+                    {/* Grid cells. */}
+                    {itemListRepr.columns.map((column) => {
+                      return (
+                        <div
+                          className="rando-itempool-cell"
+                          data-column={column.index}
+                          data-row={row.index}
+                          key={row.index + ',' + column.index}
+                          onMouseOver={handleMouseOver}
+                          onMouseOut={handleMouseOut}
+                        >
+                          {renderGridCell(column.index, row.index)}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
-      </>
-    );
-  }
+      </div>
+    </>
+  )
 }
 
 export default ItemPoolGrid;

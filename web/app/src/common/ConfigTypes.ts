@@ -1,6 +1,6 @@
 import { Matrix } from './Matrix';
 import { ItemPoolJson, ItemPoolColumnJson, ItemPoolRowJson } from './JsonTypes';
-import { ItemListBits, ItemListBitMask } from './ItemList';
+import { ItemListBitMask } from './ItemList';
 import { CategoryGroupContainer, CategoryGroupContainerBuilder } from './ItemCategory';
 
 export class ItemGridVector<T> {
@@ -221,38 +221,5 @@ export class ItemPoolGridRepr {
     const categoryGroupContainer = categoryGroupBuilder.complete();
 
     return new ItemPoolGridRepr(columns, rows, items, matrix, categoryGroupContainer);
-  }
-}
-
-export class ItemPoolState {
-  repr: ItemPoolGridRepr;
-  list: ItemListBits;
-
-  constructor(repr: ItemPoolGridRepr, list: ItemListBits) {
-    this.repr = repr;
-    this.list = list;
-  }
-
-  applyBitOperation(operation: boolean, bitMask: ItemListBitMask) {
-    if (operation) {
-      this.list.applyMaskOr(bitMask);
-    } else {
-      this.list.applyMaskNot(bitMask);
-    }
-  }
-
-  getCellCheckedState(colIndex: number, rowIndex: number) {
-    const cell = this.repr.matrix.get(colIndex, rowIndex);
-    if (cell !== undefined && cell.items.length > 0) {
-      return this.list.getCheckedState(cell.bitMask);
-    }
-  }
-
-  getColumnCheckedState(colIndex: number) {
-    return this.list.getCheckedState(this.repr.columns[colIndex].bitMask);
-  }
-
-  getRowCheckedState(rowIndex: number) {
-    return this.list.getCheckedState(this.repr.rows[rowIndex].bitMask);
   }
 }

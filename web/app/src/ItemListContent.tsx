@@ -1,82 +1,60 @@
-import React from 'react';
-import { ItemPoolState } from './common/ConfigTypes';
-
-import Slider from './Slider';
-import ItemQueryView from './ItemQueryView';
-import ItemPoolGrid from './ItemPoolGrid';
+import React, { useState } from 'react'
+import ItemListTextInput from './ItemListTextInput'
+import ItemPoolGrid from './ItemPoolGrid'
+import ItemQueryView from './ItemQueryView'
+import Slider from './Slider'
+import { RootState } from './store'
+import { ItemListStore } from './store/createItemListSlice'
 
 enum ViewState {
   Query,
-  Matrix,
+  Matrix
 }
 
 class ItemListContentState {
-  viewState: ViewState = ViewState.Query;
+  viewState: ViewState = ViewState.Query
 }
 
 interface ItemListContentProps {
-  title: string;
-  data: ItemPoolState;
-  allowMatrix?: boolean;
+  title: string
+  allowMatrix?: boolean
+  store: ItemListStore
 }
 
-class ItemListContent extends React.Component<ItemListContentProps, ItemListContentState> {
-  itemListTextElementRef: React.RefObject<HTMLInputElement>;
+const ItemListContent = (props: ItemListContentProps) => {
+  const [state, setState] = useState<ItemListContentState>(new ItemListContentState())
 
-  constructor(props: ItemListContentProps) {
-    super(props);
-    this.state = {
-      viewState: ViewState.Query,
-    };
-    this.itemListTextElementRef = React.createRef();
-  }
-
-  onStateChange = () => {
-    if (this.itemListTextElementRef.current !== null) {
-      this.itemListTextElementRef.current.value = this.props.data.list.toString();
-    }
+  const onViewCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = event.currentTarget.checked
+    setState({
+      viewState: checked ? ViewState.Matrix : ViewState.Query
+    })
   };
 
-  onViewCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = event.currentTarget.checked;
-    this.setState({
-      viewState: checked ? ViewState.Matrix : ViewState.Query,
-    });
-  };
-
-  renderView() {
-    if (this.state.viewState === ViewState.Query) {
-      return <ItemQueryView data={this.props.data} onStateChange={this.onStateChange} />;
-    } else if (this.state.viewState === ViewState.Matrix) {
-      return <ItemPoolGrid data={this.props.data} onStateChange={this.onStateChange} />;
+  const renderView = () => {
+    if (state.viewState === ViewState.Query) {
+      return <ItemQueryView store={props.store} />
+    } else if (state.viewState === ViewState.Matrix) {
+      return <ItemPoolGrid store={props.store} />
     }
   }
 
-  render() {
-    return (
-      <>
-        <div className="flex flex-row-reverse gap-4 items-center px-3 py-1">
-          <div className={`hidden xl:flex flex-row gap-2 items-center ${this.props.allowMatrix ? '' : 'hidden'}`}>
-            <span className="font-semibold">Matrix View</span>
-            <Slider onChange={this.onViewCheckboxChange} />
-          </div>
-          <div className="grow h-1 bg-[#404040]"></div>
-          <h1 className="font-semibold text-2xl pl-2">{this.props.title}</h1>
+  return (
+    <>
+      <div className="flex flex-row-reverse gap-4 items-center px-3 py-1">
+        <div className={`hidden xl:flex flex-row gap-2 items-center ${props.allowMatrix ? '' : 'hidden'}`}>
+          <span className="font-semibold">Matrix View</span>
+          <Slider onChange={onViewCheckboxChange} />
         </div>
-        <div className="flex justify-center p-3">
-          <input
-            className="font-mono w-full"
-            placeholder="Item Pool String"
-            type="text"
-            ref={this.itemListTextElementRef}
-            readOnly
-            value={this.props.data.list.toString()}
-          />
-        </div>
-        <div>{this.renderView()}</div>
-      </>
-    );
-  }
+        <div className="grow h-1 bg-[#404040]"></div>
+        <h1 className="font-semibold text-2xl pl-2">{props.title}</h1>
+      </div>
+      <div className="flex justify-center p-3">
+        <ItemListTextInput selector={(state: RootState) => state.itemPool.value.toString()}/>
+      </div>
+      <div>{renderView()}</div>
+    </>
+  )
 }
 
 export default ItemListContent;
