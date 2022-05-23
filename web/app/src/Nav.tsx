@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 
 class NavItem {
   identifier: string;
@@ -20,94 +20,89 @@ class NavSection {
   }
 }
 
+const sections = [
+  new NavSection(new NavItem('Randomizer'), [
+    new NavItem('Item Pool'),
+    new NavItem('Extra Starting Items'),
+    new NavItem('Junk Locations'),
+  ]),
+  new NavSection(new NavItem('Comfort')),
+  new NavSection(new NavItem('Cosmetics'), [new NavItem('HUD Colors')]),
+]
+
 interface NavProps {
-  selected?: string;
-  onNavItemClick: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>, identifier: string) => void;
+  selected?: string
+  onNavItemClick: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>, identifier: string) => void
 }
 
-class Nav extends React.Component<NavProps> {
-  sections: NavSection[];
-
-  constructor(props: NavProps) {
-    super(props);
-    this.sections = [
-      new NavSection(new NavItem('Randomizer'), [
-        new NavItem('Item Pool'),
-        new NavItem('Extra Starting Items'),
-        new NavItem('Junk Locations'),
-      ]),
-      new NavSection(new NavItem('Comfort')),
-      new NavSection(new NavItem('Cosmetics'), [new NavItem('HUD Colors')]),
-    ];
+const Nav = (props: NavProps) => {
+  const isSelected = (identifier: string) => {
+    return props.selected !== undefined ? props.selected === identifier : false
   }
 
-  isSelected(identifier: string) {
-    return this.props.selected !== undefined ? this.props.selected === identifier : false;
-  }
-
-  renderChildNavItem(item: NavItem) {
-    if (this.isSelected(item.identifier)) {
+  const renderChildNavItem = (item: NavItem) => {
+    if (isSelected(item.identifier)) {
       return (
         <li key={item.identifier}>
           <button
             className="font-semibold h-full py-1 block border-l-2 pl-4 -ml-2px border-transparent border-purple-500 text-purple-500"
-            onClick={(event) => this.props.onNavItemClick(event, item.identifier)}
+            onClick={(event) => props.onNavItemClick(event, item.identifier)}
           >
             {item.name}
           </button>
         </li>
-      );
+      )
     } else {
       return (
         <li key={item.identifier}>
           <button
             className="h-full py-1 block border-l-2 pl-4 -ml-2px border-transparent hover:border-neutral-300 hover:text-[#f8f8f8]"
-            onClick={(event) => this.props.onNavItemClick(event, item.identifier)}
+            onClick={(event) => props.onNavItemClick(event, item.identifier)}
           >
             {item.name}
           </button>
         </li>
-      );
+      )
     }
   }
 
-  renderRootNavItem(item: NavItem) {
-    if (this.isSelected(item.identifier)) {
+  const renderRootNavItem = (item: NavItem) => {
+    if (isSelected(item.identifier)) {
       return (
         <button
           className="block mb-8 lg:mb-3 font-semibold decoration-violet-500 underline"
-          onClick={(event) => this.props.onNavItemClick(event, item.identifier)}
+          onClick={(event) => props.onNavItemClick(event, item.identifier)}
         >
           {item.name}
         </button>
-      );
+      )
     } else {
       return (
         <button
           className="block mb-8 lg:mb-3 font-semibold decoration-neutral-500 hover:underline"
-          onClick={(event) => this.props.onNavItemClick(event, item.identifier)}
+          onClick={(event) => props.onNavItemClick(event, item.identifier)}
         >
           {item.name}
         </button>
-      );
+      )
     }
   }
 
-  renderSection(section: NavSection) {
-    let list;
+  const renderSection = (section: NavSection) => {
+    let list
     if (section.children && section.children.length > 0) {
-      list = section.children.map((child) => this.renderChildNavItem(child));
+      list = section.children.map((child) => renderChildNavItem(child))
     }
 
     return (
       <li className="mt-12 lg:mt-8" key={section.root.identifier}>
-        {this.renderRootNavItem(section.root)}
+        {renderRootNavItem(section.root)}
         <ul className="border-l-2 border-neutral-700 text-sm space-y-6 lg:space-y-1">{list}</ul>
       </li>
-    );
+    )
   }
 
-  renderGeneratorSelect() {
+  const renderGeneratorSelect = () => {
     return (
       <div>
         <label className="hidden mb-8 lg:mb-3 font-semibold" htmlFor="generator-select">
@@ -121,18 +116,16 @@ class Nav extends React.Component<NavProps> {
           <span className="focus"></span>
         </div>
       </div>
-    );
+    )
   }
 
-  render() {
-    return (
-      <>
-        {this.renderGeneratorSelect()}
-        <div className="my-separator h-1 mt-6 mb-2"></div>
-        <ul className="ml-5px">{this.sections.map((section) => this.renderSection(section))}</ul>
-      </>
-    );
-  }
+  return (
+    <>
+      {renderGeneratorSelect()}
+      <div className="my-separator h-1 mt-6 mb-2"></div>
+      <ul className="ml-5px">{sections.map((section) => renderSection(section))}</ul>
+    </>
+  )
 }
 
-export default Nav;
+export default Nav
