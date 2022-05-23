@@ -5,7 +5,7 @@ import { setItemPoolColumnCount } from './RootStyle'
 import { ItemListBitMask } from './common/ItemList'
 import { useAppDispatch, useAppSelector } from './hooks'
 import { ItemListStore } from './store/createItemListSlice'
-import './ItemMatrixView.css'
+import styles from './ItemMatrixView.module.css'
 
 const dataColumnAtt = 'data-column'
 const dataRowAtt = 'data-row'
@@ -126,20 +126,20 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
 
   return (
     <>
-      <div className="rando-itempool-root-container" ref={gridRootElement}>
+      <div className={styles['root-container']} ref={gridRootElement}>
         {/* Grid head. */}
-        <div className="rando-itempool-head-container">
-          <div className="rando-itempool-head-scroll-container">
-            <div className="rando-itempool-head">
+        <div className={styles['head-container']}>
+          <div className={styles['head-scroll-container']}>
+            <div className={styles['head']}>
               {/* Show randomized percentage. */}
-              <div className="rando-itempool-topleft">
+              <div className={styles['topleft']}>
                 <ItemListCounter store={props.store} />
               </div>
 
               {/* Column labels. */}
               {itemListRepr.columns.map((col) => {
                 return (
-                  <div className="rando-itempool-label-v" key={'label:' + col.index}>
+                  <div className={styles['label-v']} key={'label:' + col.index}>
                     <span>
                       {col.data.Name}: +{col.count}
                     </span>
@@ -148,7 +148,7 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
               })}
 
               {/* "All" checkbox. */}
-              <div className="rando-itempool-corner">
+              <div className={styles['corner']}>
                 <div>
                   <IdentityCheckbox store={props.store} />
                 </div>
@@ -157,7 +157,7 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
               {/* Column checkboxes. */}
               {itemListRepr.columns.map((col) => {
                 return (
-                  <div className="rando-itempool-col-checkbox" key={'checkbox:' + col.index}>
+                  <div key={'checkbox:' + col.index}>
                     <MaskCheckbox store={props.store} bitMask={col.bitMask} />
                   </div>
                 )
@@ -171,14 +171,14 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
         </div>
 
         {/* Grid body. */}
-        <div className="rando-itempool-body-container">
-          <div className="rando-itempool-body-scroll-container">
-            <div className="rando-itempool-body">
+        <div className={styles['body-container']}>
+          <div className={styles['body-scroll-container']}>
+            <div className={styles['body']}>
               {itemListRepr.rows.map((row) => {
                 return (
-                  <div className="rando-itempool-row" key={row.index}>
+                  <div className={styles['row']} key={row.index}>
                     {/* Row label. */}
-                    <div className="rando-itempool-label-h">
+                    <div className={styles['label-h']}>
                       <label data-row={row.index} onMouseOver={handleMouseOver} onMouseOut={handleMouseOut}>
                         <span>
                           {row.data.Name}: +{row.count}
@@ -191,7 +191,7 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
                     {itemListRepr.columns.map((column) => {
                       return (
                         <div
-                          className="rando-itempool-cell"
+                          className={styles['cell']}
                           data-column={column.index}
                           data-row={row.index}
                           key={row.index + ',' + column.index}

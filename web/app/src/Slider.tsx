@@ -1,5 +1,5 @@
 import React from 'react';
-import './Slider.css';
+import styles from './Slider.module.css';
 
 interface SliderProps {
   defaultChecked?: boolean;
@@ -8,9 +8,9 @@ interface SliderProps {
 
 export const Slider = (props: SliderProps) => {
   return (
-    <label className="switch">
+    <label className={styles['switch']}>
       <input type="checkbox" defaultChecked={props.defaultChecked} onChange={props.onChange} />
-      <span className="slider rounded"></span>
+      <span className={`${styles['slider']} rounded`}></span>
     </label>
   );
 };

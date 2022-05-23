@@ -1,0 +1,214 @@
+@value grid-highlight-color: rgba(255, 255, 255, 0.3);
+@value label-h-width: 13rem;
+@value label-v-height: 8rem;
+
+/* TODO: Automate via CSS preprocessor? */
+.root-container[data-hovered-column='0'] .cell[data-column='0'],
+.root-container[data-hovered-column='1'] .cell[data-column='1'],
+.root-container[data-hovered-column='2'] .cell[data-column='2'],
+.root-container[data-hovered-column='3'] .cell[data-column='3'],
+.root-container[data-hovered-column='4'] .cell[data-column='4'],
+.root-container[data-hovered-column='5'] .cell[data-column='5'],
+.root-container[data-hovered-column='6'] .cell[data-column='6'],
+.root-container[data-hovered-column='7'] .cell[data-column='7'],
+.root-container[data-hovered-column='8'] .cell[data-column='8'],
+.root-container[data-hovered-column='9'] .cell[data-column='9'],
+.root-container[data-hovered-column='10'] .cell[data-column='10'],
+.root-container[data-hovered-column='11'] .cell[data-column='11'],
+.root-container[data-hovered-column='12'] .cell[data-column='12'],
+.root-container[data-hovered-column='13'] .cell[data-column='13'],
+.root-container[data-hovered-column='14'] .cell[data-column='14'],
+.root-container[data-hovered-column='15'] .cell[data-column='15'],
+.root-container[data-hovered-column='16'] .cell[data-column='16'],
+.root-container[data-hovered-column='17'] .cell[data-column='17'],
+.root-container[data-hovered-column='18'] .cell[data-column='18'],
+.root-container[data-hovered-column='19'] .cell[data-column='19'],
+.root-container[data-hovered-column='20'] .cell[data-column='20'],
+.root-container[data-hovered-column='21'] .cell[data-column='21'],
+.root-container[data-hovered-column='22'] .cell[data-column='22'],
+.root-container[data-hovered-column='23'] .cell[data-column='23'],
+.root-container[data-hovered-column='24'] .cell[data-column='24'] {
+  border-color: grid-highlight-color;
+  border-style: dashed;
+  border-left-width: 1px;
+  border-right-width: 1px;
+}
+
+/* TODO: Automate via CSS preprocessor? */
+.root-container[data-hovered-row='0'] .cell[data-row='0'],
+.root-container[data-hovered-row='1'] .cell[data-row='1'],
+.root-container[data-hovered-row='2'] .cell[data-row='2'],
+.root-container[data-hovered-row='3'] .cell[data-row='3'],
+.root-container[data-hovered-row='4'] .cell[data-row='4'],
+.root-container[data-hovered-row='5'] .cell[data-row='5'],
+.root-container[data-hovered-row='6'] .cell[data-row='6'],
+.root-container[data-hovered-row='7'] .cell[data-row='7'],
+.root-container[data-hovered-row='8'] .cell[data-row='8'],
+.root-container[data-hovered-row='9'] .cell[data-row='9'],
+.root-container[data-hovered-row='10'] .cell[data-row='10'],
+.root-container[data-hovered-row='11'] .cell[data-row='11'],
+.root-container[data-hovered-row='12'] .cell[data-row='12'],
+.root-container[data-hovered-row='13'] .cell[data-row='13'],
+.root-container[data-hovered-row='14'] .cell[data-row='14'],
+.root-container[data-hovered-row='15'] .cell[data-row='15'],
+.root-container[data-hovered-row='16'] .cell[data-row='16'],
+.root-container[data-hovered-row='17'] .cell[data-row='17'],
+.root-container[data-hovered-row='18'] .cell[data-row='18'],
+.root-container[data-hovered-row='19'] .cell[data-row='19'],
+.root-container[data-hovered-row='20'] .cell[data-row='20'],
+.root-container[data-hovered-row='21'] .cell[data-row='21'],
+.root-container[data-hovered-row='22'] .cell[data-row='22'],
+.root-container[data-hovered-row='23'] .cell[data-row='23'],
+.root-container[data-hovered-row='24'] .cell[data-row='24'],
+.root-container[data-hovered-row='25'] .cell[data-row='25'],
+.root-container[data-hovered-row='26'] .cell[data-row='26'],
+.root-container[data-hovered-row='27'] .cell[data-row='27'],
+.root-container[data-hovered-row='28'] .cell[data-row='28'],
+.root-container[data-hovered-row='29'] .cell[data-row='29'],
+.root-container[data-hovered-row='30'] .cell[data-row='30'],
+.root-container[data-hovered-row='31'] .cell[data-row='31'],
+.root-container[data-hovered-row='32'] .cell[data-row='32'],
+.root-container[data-hovered-row='33'] .cell[data-row='33'],
+.root-container[data-hovered-row='34'] .cell[data-row='34'],
+.root-container[data-hovered-row='35'] .cell[data-row='35'],
+.root-container[data-hovered-row='36'] .cell[data-row='36'],
+.root-container[data-hovered-row='37'] .cell[data-row='37'],
+.root-container[data-hovered-row='38'] .cell[data-row='38'],
+.root-container[data-hovered-row='39'] .cell[data-row='39'],
+.root-container[data-hovered-row='40'] .cell[data-row='40'] {
+  border-color: grid-highlight-color;
+  border-style: dashed;
+  border-bottom-width: 1px;
+  border-top-width: 1px;
+}
+
+.cell {
+  background-color: rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.root-container {
+  padding: 1rem;
+}
+
+.head-container {
+  display: grid;
+  grid-template-columns: 1fr 2rem;
+  padding-bottom: 0.25rem;
+}
+
+.head {
+  display: grid;
+  grid-template-columns: label-h-width repeat(var(--app-itempool-column-count), minmax(0, 1fr));
+  grid-template-rows: label-v-height auto;
+  justify-items: center;
+  padding-bottom: 0.25rem;
+  place-content: center;
+  row-gap: 0.25rem;
+}
+
+.body {
+  display: grid;
+  grid-auto-flow: row;
+  grid-template-columns: label-h-width repeat(var(--app-itempool-column-count), minmax(0, 1fr));
+  justify-items: center;
+  padding: 0.25rem 0;
+  place-content: center;
+}
+
+.head-scroll-container {
+  display: grid;
+  grid-template-columns: 1fr 0.5rem minmax(min-content, max-content);
+}
+
+.body-scroll-container {
+  display: grid;
+  grid-template-columns: 1fr 0.5rem;
+  max-height: 800px;
+  overflow-y: scroll;
+  scroll-behavior: smooth;
+}
+
+.body-container {
+  border-top: dashed 0.125rem #ccc;
+  display: grid;
+  grid-column: span 2 / span 2;
+  grid-template-columns: 1fr 2rem;
+  max-height: 800px;
+  padding-top: 0.25rem;
+}
+
+.root-container input[type='checkbox'] {
+  accent-color: var(--violet-500);
+  height: 1rem;
+  width: 1rem;
+}
+
+.corner {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 0.5em;
+  width: 100%;
+}
+
+.label-h {
+  display: grid;
+  justify-self: end;
+  min-height: 2.25rem;
+  width: 100%;
+  padding-right: 0.5em;
+}
+
+.label-h > label {
+  align-items: center;
+  column-gap: 0.25rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  justify-self: end;
+}
+
+.label-h > label > span {
+  padding: 0 0.25rem 0.25rem 0;
+  user-select: none;
+}
+
+.label-v {
+  display: flex;
+  justify-content: center;
+  padding-right: 0.5rem;
+  transform: rotate(30deg);
+  transform-origin: bottom;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.label-v > span {
+  transform: rotate(180deg);
+  user-select: none;
+  writing-mode: vertical-lr;
+}
+
+.label-v > span:hover {
+  color: var(--violet-500);
+  font-weight: 600;
+}
+
+.topleft {
+  justify-self: start;
+}
+
+.topleft > span {
+  display: inline-block;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  user-select: none;
+  white-space: nowrap;
+  width: 0;
+}
+
+.row {
+  display: contents;
+}
