@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Checkbox } from './Checkbox'
 import { useItemListRepr } from './Randomizer'
+import Select from './Select'
 import { CheckedState } from './common/CheckedState'
 import { ItemRepr } from './common/ConfigTypes'
 import { CategoryGroup, CategoryType, ItemGroup } from './common/ItemCategory'
@@ -154,16 +155,10 @@ const ItemQueryView = (props: ItemQueryViewProps) => {
       <div className="flex flex-col md:flex-row gap-4 place-content-center p-4">
         <input className="w-full md:w-1/2" type="text" placeholder="Query" onChange={onQueryChange} />
         <div className="flex flex-row gap-2 items-center justify-center">
-          <label className="md:hidden" htmlFor="sort-by">
-            Categories:
-          </label>
-          <div className="select">
-            <select className="leading-4" id="sort-by" onChange={onCategorySelect}>
-              <option value={CategoryType.Location}>Location</option>
-              <option value={CategoryType.Item}>Item</option>
-            </select>
-            <span className="focus"></span>
-          </div>
+          <Select id="sort-by" label="Categories:" onChange={onCategorySelect}>
+            <option value={CategoryType.Location}>Location</option>
+            <option value={CategoryType.Item}>Item</option>
+          </Select>
         </div>
       </div>
       <div className="p-4 w-full select-none">

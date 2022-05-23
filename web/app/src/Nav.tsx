@@ -1,4 +1,5 @@
 import React from 'react'
+import Select from './Select'
 
 class NavItem {
   identifier: string;
@@ -105,16 +106,10 @@ const Nav = (props: NavProps) => {
   const renderGeneratorSelect = () => {
     return (
       <div>
-        <label className="hidden mb-8 lg:mb-3 font-semibold" htmlFor="generator-select">
-          Generator
-        </label>
-        <div className="select">
-          <select className="leading-4" id="generator-select">
-            <option value="1.14.0.6 Release">1.14.0.6 Release</option>
-            <option value="1.15.0.11-beta">1.15.0.11-beta</option>
-          </select>
-          <span className="focus"></span>
-        </div>
+        <Select id="generator-select" label="Generator">
+          <option value="1.14.0.6 Release">1.14.0.6 Release</option>
+          <option value="1.15.0.11-beta">1.15.0.11-beta</option>
+        </Select>
       </div>
     )
   }
