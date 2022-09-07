@@ -11,6 +11,7 @@
 
 # Web Application Patch Generation Files
 */patchgenerationresults/patch*
+*/ReleaseLibraries/*/
 
 # User-specific files
 *.rsuser

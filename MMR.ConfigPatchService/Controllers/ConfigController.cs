@@ -55,16 +55,16 @@ public class ConfigController : ControllerBase
     }
 
     [HttpPost(template: "downloadLatestRelease", Name = "DownloadLatestRelease")]
-    public async Task<IActionResult> DownloadLatestRelease()
+    public async Task<IActionResult> DownloadLatestRelease(bool force = false)
     {
-        string result = await _dependencyService.DownloadLatestRelease();
+        string result = await _dependencyService.DownloadLatestRelease(force);
         return Ok(result);
     }
 
     [HttpPost(template: "downloadRelease/{tag}", Name = "DownloadSpecificRelease")]
-    public async Task<IActionResult> DownloadSpecificRelease(string tag)
+    public async Task<IActionResult> DownloadSpecificRelease(string tag, bool force)
     {
-        string result = await _dependencyService.DownloadSpecificRelease(tag);
+        string result = await _dependencyService.DownloadSpecificRelease(tag, force);
         return Ok(result);
     }
 

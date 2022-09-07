@@ -5,12 +5,14 @@ public interface IDependencyService
 
     public IList<string> ListCurrentlyDownloadedLibraries();
 
+    public Task<string> EnsureLatestLibraryPresent();
+
     /**
      * <see cref="GithubDependencyService.ListRemoteLibraries"/>
      */
     Task<IList<string>> ListRemoteLibraries();
 
-    Task<string> DownloadLatestRelease();
-    Task<string> DownloadSpecificRelease(string releaseTag);
+    Task<string> DownloadLatestRelease(bool force);
+    Task<string> DownloadSpecificRelease(string releaseTag, bool force);
 
 }

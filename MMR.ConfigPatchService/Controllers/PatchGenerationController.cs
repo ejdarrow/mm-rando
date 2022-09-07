@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using MMR.Common.Utils;
 using MMR.ConfigPatchService.Model;
-using MMR.Randomizer;
+using MMR.ConfigPatchService.Services;
 using MMR.Randomizer.Models.Settings;
 
 namespace MMR.ConfigPatchService.Controllers;
@@ -17,14 +17,16 @@ namespace MMR.ConfigPatchService.Controllers;
 public class PatchGenerationController : ControllerBase
 {
     private readonly ILogger<ConfigController> _logger;
+    private readonly IReflectionService _reflectionService;
 
-    public PatchGenerationController(ILogger<ConfigController> logger)
+    public PatchGenerationController(ILogger<ConfigController> logger, IReflectionService reflectionService)
     {
         _logger = logger;
+        _reflectionService = reflectionService;
     }
 
     [HttpPost(template: "patch/default", Name = "GeneratePatchWithDefaultConfig")]
-    public IActionResult GeneratePatchWithDefaultConfiguration(string? seed)
+    public async Task<IActionResult> GeneratePatchWithDefaultConfiguration(string? seed, string version = "latest")
     {
         bool newSeed = false;
         if (string.IsNullOrEmpty(seed))
@@ -33,15 +35,14 @@ public class PatchGenerationController : ControllerBase
             seed = new Random().Next().ToString();
         }
         _logger.LogInformation("Requested Patch Generation with Default Configuration and seed (new = {newSeed}) {seed} at {time}", newSeed, seed, DateTime.Now);
-        var keepaliveProgressReporter = new KeepaliveProgressReporter();
         var config = Constants.DefaultConfiguration;
         config.OutputSettings.GenerateROM = false; //For overrides for local testing
-        return handleResult(ConfigurationProcessor.Process(config, int.Parse(seed), keepaliveProgressReporter));
+        return handleResult(await _reflectionService.CallConfigurationProcessorViaVersion(config, version, seed));
 
     }
 
     [HttpPost(template: "patch", Name = "GeneratePatch")]
-    public IActionResult GetPatch(string seed, Configuration configuration)
+    public async Task<IActionResult> GetPatch(string seed, Configuration configuration, string version = "latest")
     {
         bool newSeed = false;
         if (string.IsNullOrEmpty(seed))
@@ -51,13 +52,12 @@ public class PatchGenerationController : ControllerBase
         }
         configuration.OutputSettings.GenerateROM = false;
         _logger.LogInformation("Requested Patch Generation with Uploaded Configuration and seed (new = {newSeed}) {seed} at {time}", newSeed, seed, DateTime.Now);
-        var keepaliveProgressReporter = new KeepaliveProgressReporter();
-        return handleResult(ConfigurationProcessor.Process(configuration, int.Parse(seed), keepaliveProgressReporter));
+        return handleResult(await _reflectionService.CallConfigurationProcessorViaVersion(configuration, version, seed));
 
     }
 
     [HttpPost(template: "patchWithFile", Name = "GeneratePatchFromFile")]
-    public IActionResult GetPatch(string? seed, IFormFile configuration)
+    public async Task<IActionResult> GetPatch(string? seed, IFormFile configuration, string version = "latest")
     {
         StreamReader reader = new StreamReader(configuration.OpenReadStream());
         String configurationAsString = reader.ReadToEnd();
@@ -74,9 +74,8 @@ public class PatchGenerationController : ControllerBase
             return BadRequest("Could not deserialize config file");
         }
         _logger.LogInformation("Requested Patch Generation with Uploaded Configuration and seed (new = {newSeed}) {seed} at {time}", newSeed, seed, DateTime.Now);
-        var keepaliveProgressReporter = new KeepaliveProgressReporter();
         configurationFromFile.OutputSettings.GenerateROM = false;
-        return handleResult(ConfigurationProcessor.Process(configurationFromFile, int.Parse(seed), keepaliveProgressReporter));
+        return handleResult(await _reflectionService.CallConfigurationProcessorViaVersion(configurationFromFile, version, seed));
     }
 
     private IActionResult handleResult(string? result)

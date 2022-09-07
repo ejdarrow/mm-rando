@@ -1,4 +1,5 @@
-﻿using MMR.ConfigPatchService.Model;
+﻿using System.IO.Compression;
+using MMR.ConfigPatchService.Model;
 
 namespace MMR.ConfigPatchService.Services;
 
@@ -28,6 +29,14 @@ public class GithubDependencyService : IDependencyService
         return releaseObjects;
     }
 
+    public async Task<string> EnsureLatestLibraryPresent()
+    {
+        await DownloadLatestRelease(false);
+        var latestRelease =
+            await _client.Repository.Release.GetLatest(Constants.GithubReleaseOwner, Constants.GithubReleaseRepo);
+        return latestRelease.TagName;
+    }
+
     public async Task<IList<string>> ListRemoteLibraries()
     {
         var releases =
@@ -44,7 +53,7 @@ public class GithubDependencyService : IDependencyService
         return releaseDetails;
     }
 
-    public async Task<string> DownloadSpecificRelease(string releaseTag)
+    public async Task<string> DownloadSpecificRelease(string releaseTag, bool force)
     {
         var knownRemoteLibraries = await ListRemoteLibraries();
         if (!knownRemoteLibraries.Contains(releaseTag))
@@ -56,23 +65,23 @@ public class GithubDependencyService : IDependencyService
         var release =
             await _client.Repository.Release.Get(Constants.GithubReleaseOwner, Constants.GithubReleaseRepo,
                 releaseTag);
-        return await DownloadRelease(release);
+        return await DownloadRelease(release, force);
     }
 
-    public async Task<string> DownloadLatestRelease()
+    public async Task<string> DownloadLatestRelease(bool force)
     {
         var latestRelease =
             await _client.Repository.Release.GetLatest(Constants.GithubReleaseOwner, Constants.GithubReleaseRepo);
-        return await DownloadRelease(latestRelease);
+        return await DownloadRelease(latestRelease, force);
     }
 
-    private async Task<string> DownloadRelease(Release release)
+    private async Task<string> DownloadRelease(Release release, bool forceRedownload)
     {
         var likelyAsset = release.Assets[0];
         //TODO: make sure the above asset is actually the one we care about in case we eventually have multiple.
 
         var expectedPath = $"{Constants.ReleaseDependencyFolder}/{release.TagName}/{likelyAsset.Name}";
-        if (File.Exists(expectedPath))
+        if (File.Exists(expectedPath) && !forceRedownload)
         {
             _logger.LogWarning($"Release {release.Name} already present in dependency directory");
             return release.TagName + " already local";
@@ -86,6 +95,7 @@ public class GithubDependencyService : IDependencyService
         }
 
         await DownloadFileAsync(likelyAsset.BrowserDownloadUrl, expectedPath);
+        ZipFile.ExtractToDirectory(expectedPath,$"{Constants.ReleaseDependencyFolder}/{release.TagName}/content");
         return release.TagName + " downloaded";
     }
 
@@ -100,5 +110,7 @@ public class GithubDependencyService : IDependencyService
 
         byte[] fileBytes = await _httpClient.GetByteArrayAsync(uri);
         await File.WriteAllBytesAsync(outputPath, fileBytes);
+
+
     }
 }
