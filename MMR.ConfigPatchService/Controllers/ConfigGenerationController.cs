@@ -1,10 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using MMR.Common.Utils;
 using MMR.ConfigPatchService.Model;
-using MMR.Randomizer;
 using MMR.Randomizer.Models.Settings;
 using MMR.Randomizer.Utils;
-using System.IO;
 
 namespace MMR.ConfigPatchService.Controllers;
 

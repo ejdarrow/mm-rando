@@ -9,8 +9,22 @@
     <ItemGroup>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
     </ItemGroup>
-    <ItemGroup>
+    <!--ItemGroup>
         <ProjectReference Include="..\MMR.Randomizer\MMR.Randomizer.csproj" />
+    </ItemGroup-->
+    <ItemGroup>
+        <Reference Include="MMR.Randomizer.dll">
+            <HintPath>./ReleaseLibraries/MMR.Randomizer.dll</HintPath>
+        </Reference>
+        <Reference Include="MMR.Common.dll">
+            <HintPath>./ReleaseLibraries/MMR.Common.dll</HintPath>
+        </Reference>
+        <Reference Include="MMR.Yaz.dll">
+            <HintPath>./ReleaseLibraries/MMR.Yaz.dll</HintPath>
+        </Reference>
+        <Reference Include="Be.IO.dll">
+            <HintPath>./ReleaseLibraries/Be.IO.dll</HintPath>
+        </Reference>
     </ItemGroup>
     <ItemGroup>
       <None Include="bin\Debug\default.z64" />
@@ -19,6 +33,7 @@
     <ItemGroup>
       <Folder Include="bin\Debug\net6.0" />
       <Folder Include="patchgenerationresults" />
+      <Folder Include="ReleaseLibraries" />
     </ItemGroup>
 
 </Project>
