@@ -7,12 +7,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Octokit" Version="2.0.1" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
     </ItemGroup>
-    <!--ItemGroup>
-        <ProjectReference Include="..\MMR.Randomizer\MMR.Randomizer.csproj" />
-    </ItemGroup-->
     <ItemGroup>
+        <ProjectReference Include="..\MMR.Randomizer\MMR.Randomizer.csproj" />
+    </ItemGroup>
+    <!--ItemGroup>
         <Reference Include="MMR.Randomizer.dll">
             <HintPath>./ReleaseLibraries/MMR.Randomizer.dll</HintPath>
         </Reference>
@@ -25,15 +26,13 @@
         <Reference Include="Be.IO.dll">
             <HintPath>./ReleaseLibraries/Be.IO.dll</HintPath>
         </Reference>
-    </ItemGroup>
+    </ItemGroup-->
     <ItemGroup>
       <None Include="bin\Debug\default.z64" />
       <None Include="bin\Debug\net6.0\default.z64" />
     </ItemGroup>
     <ItemGroup>
       <Folder Include="bin\Debug\net6.0" />
-      <Folder Include="patchgenerationresults" />
-      <Folder Include="ReleaseLibraries" />
     </ItemGroup>
 
 </Project>

@@ -21,4 +21,9 @@ public static class Constants
             OutputROMFilename = "patchgenerationresults/patch.z64",
         },
     };
+
+    public static readonly string GithubReleaseOwner = "ZoeyZolotova";
+    public static readonly string GithubReleaseRepo = "mm-rando";
+    public static readonly string GithubLookupApplicationName = "mmr-patch-webservice";
+    public static readonly string ReleaseDependencyFolder = "ReleaseLibraries";
 }

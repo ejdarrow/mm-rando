@@ -16,9 +16,9 @@ namespace MMR.ConfigPatchService.Controllers;
 [Route("[controller]")]
 public class PatchGenerationController : ControllerBase
 {
-    private readonly ILogger<ConfigGenerationController> _logger;
+    private readonly ILogger<ConfigController> _logger;
 
-    public PatchGenerationController(ILogger<ConfigGenerationController> logger)
+    public PatchGenerationController(ILogger<ConfigController> logger)
     {
         _logger = logger;
     }
