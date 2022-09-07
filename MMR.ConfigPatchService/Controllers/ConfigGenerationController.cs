@@ -3,6 +3,8 @@ using MMR.Common.Utils;
 using MMR.ConfigPatchService.Model;
 using MMR.Randomizer;
 using MMR.Randomizer.Models.Settings;
+using MMR.Randomizer.Utils;
+using System.IO;
 
 namespace MMR.ConfigPatchService.Controllers;
 
@@ -21,7 +23,15 @@ public class ConfigGenerationController : ControllerBase
     [HttpGet(template: "default", Name = "DefaultConfig")]
     public Configuration GetDefaultConfig()
     {
-        return Constants.DEFAULT_CONFIGURATION;
+        return Constants.DefaultConfiguration;
+    }
+
+    [HttpGet(template: "validaterom", Name = "Validate")]
+    public string ValidateLocalFiles()
+    {
+        var fileExists = System.IO.File.Exists("default.z64");
+        var fileValid = RomUtils.ValidateROM("default.z64");
+        return $"Expected local default MM file exists: {fileExists}. File is Valid: {fileValid}";
     }
 
 

@@ -8,6 +8,10 @@ using MMR.Randomizer.Models.Settings;
 
 namespace MMR.ConfigPatchService.Controllers;
 
+
+//TODO: Return Zip of all resources rather than just mmr file
+//TODO: Verify and validate config file upload deserialization
+
 [ApiController]
 [Route("[controller]")]
 public class PatchGenerationController : ControllerBase
@@ -20,7 +24,7 @@ public class PatchGenerationController : ControllerBase
     }
 
     [HttpPost(template: "patch/default", Name = "GeneratePatchWithDefaultConfig")]
-    public string GeneratePatchWithDefaultConfiguration(string? seed)
+    public IActionResult GeneratePatchWithDefaultConfiguration(string? seed)
     {
         bool newSeed = false;
         if (string.IsNullOrEmpty(seed))
@@ -30,11 +34,14 @@ public class PatchGenerationController : ControllerBase
         }
         _logger.LogInformation("Requested Patch Generation with Default Configuration and seed (new = {newSeed}) {seed} at {time}", newSeed, seed, DateTime.Now);
         var keepaliveProgressReporter = new KeepaliveProgressReporter();
-        return ConfigurationProcessor.Process(Constants.DEFAULT_CONFIGURATION, int.Parse(seed), keepaliveProgressReporter);
+        var config = Constants.DefaultConfiguration;
+        config.OutputSettings.GenerateROM = false; //For overrides for local testing
+        return handleResult(ConfigurationProcessor.Process(config, int.Parse(seed), keepaliveProgressReporter));
+
     }
 
     [HttpPost(template: "patch", Name = "GeneratePatch")]
-    public string GetPatch(string seed, Configuration configuration)
+    public IActionResult GetPatch(string seed, Configuration configuration)
     {
         bool newSeed = false;
         if (string.IsNullOrEmpty(seed))
@@ -42,15 +49,16 @@ public class PatchGenerationController : ControllerBase
             newSeed = true;
             seed = new Random().Next().ToString();
         }
+        configuration.OutputSettings.GenerateROM = false;
         _logger.LogInformation("Requested Patch Generation with Uploaded Configuration and seed (new = {newSeed}) {seed} at {time}", newSeed, seed, DateTime.Now);
         var keepaliveProgressReporter = new KeepaliveProgressReporter();
-        return ConfigurationProcessor.Process(configuration, int.Parse(seed), keepaliveProgressReporter);
+        return handleResult(ConfigurationProcessor.Process(configuration, int.Parse(seed), keepaliveProgressReporter));
+
     }
 
     [HttpPost(template: "patchWithFile", Name = "GeneratePatchFromFile")]
-    public string GetPatch(string? seed, IFormFile configuration)
+    public IActionResult GetPatch(string? seed, IFormFile configuration)
     {
-
         StreamReader reader = new StreamReader(configuration.OpenReadStream());
         String configurationAsString = reader.ReadToEnd();
         var configurationFromFile = JsonSerializer.Deserialize<Configuration>(configurationAsString);
@@ -60,8 +68,26 @@ public class PatchGenerationController : ControllerBase
             newSeed = true;
             seed = new Random().Next().ToString();
         }
+
+        if (configurationFromFile == null)
+        {
+            return BadRequest("Could not deserialize config file");
+        }
         _logger.LogInformation("Requested Patch Generation with Uploaded Configuration and seed (new = {newSeed}) {seed} at {time}", newSeed, seed, DateTime.Now);
         var keepaliveProgressReporter = new KeepaliveProgressReporter();
-        return ConfigurationProcessor.Process(configurationFromFile, int.Parse(seed), keepaliveProgressReporter);
+        configurationFromFile.OutputSettings.GenerateROM = false;
+        return handleResult(ConfigurationProcessor.Process(configurationFromFile, int.Parse(seed), keepaliveProgressReporter));
+    }
+
+    private IActionResult handleResult(string? result)
+    {
+        var outputPatchFilename = Constants.DefaultConfiguration.OutputSettings.OutputROMFilename.Replace("z64", "mmr");
+        if (result == null)
+        {
+            byte[] fileBytes = System.IO.File.ReadAllBytes(outputPatchFilename);
+            return File(fileBytes, "application/force-download", "patch.mmr");
+        }
+
+        return BadRequest(result);
     }
 }

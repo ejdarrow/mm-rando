@@ -2,9 +2,9 @@
 
 namespace MMR.ConfigPatchService.Model;
 
-public class Constants
+public static class Constants
 {
-    public static Configuration DEFAULT_CONFIGURATION = new Configuration
+    public static readonly Configuration DefaultConfiguration = new Configuration
 
     {
         CosmeticSettings = new CosmeticSettings(),
@@ -14,10 +14,11 @@ public class Constants
         },
         OutputSettings = new OutputSettings()
         {
-            InputROMFilename = "input.z64",
+            InputROMFilename = "default.z64",
             GeneratePatch = true,
             GenerateROM = false,
-            OutputVC = false
+            OutputVC = false,
+            OutputROMFilename = "patchgenerationresults/patch.z64",
         },
     };
 }

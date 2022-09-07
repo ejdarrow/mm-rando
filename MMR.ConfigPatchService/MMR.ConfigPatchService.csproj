@@ -12,5 +12,13 @@
     <ItemGroup>
         <ProjectReference Include="..\MMR.Randomizer\MMR.Randomizer.csproj" />
     </ItemGroup>
+    <ItemGroup>
+      <None Include="bin\Debug\default.z64" />
+      <None Include="bin\Debug\net6.0\default.z64" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="bin\Debug\net6.0" />
+      <Folder Include="patchgenerationresults" />
+    </ItemGroup>
 
 </Project>
