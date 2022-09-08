@@ -36,6 +36,16 @@ public class GithubDependencyService : IDependencyService
         return latestRelease.TagName;
     }
 
+    public async Task<string> EnsureSpecificLibraryPresent(string version)
+    {
+        if (ListCurrentlyDownloadedLibraries().Contains(version))
+        {
+            return version;
+        }
+        await DownloadSpecificRelease(version, false);
+        return version;
+    }
+
     public async Task<IList<string>> ListRemoteLibraries()
     {
         var releases =

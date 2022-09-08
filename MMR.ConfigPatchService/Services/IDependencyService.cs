@@ -7,6 +7,9 @@ public interface IDependencyService
 
     public Task<string> EnsureLatestLibraryPresent();
 
+    public Task<string> EnsureSpecificLibraryPresent(string version);
+
+
     /**
      * <see cref="GithubDependencyService.ListRemoteLibraries"/>
      */

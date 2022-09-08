@@ -1,16 +1,11 @@
+using System.IO.Compression;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
-using MMR.Common.Utils;
-using MMR.ConfigPatchService.Model;
 using MMR.ConfigPatchService.Services;
-using MMR.Randomizer.Models.Settings;
 
 namespace MMR.ConfigPatchService.Controllers;
 
-
-//TODO: Return Zip of all resources rather than just mmr file
-//TODO: Verify and validate config file upload deserialization
 
 [ApiController]
 [Route("[controller]")]
@@ -35,15 +30,13 @@ public class PatchGenerationController : ControllerBase
             seed = new Random().Next().ToString();
         }
         _logger.LogInformation("Requested Patch Generation with Default Configuration and seed (new = {newSeed}) {seed} at {time}", newSeed, seed, DateTime.Now);
-        var config = Constants.DefaultConfiguration;
-        config.OutputSettings.GenerateROM = false; //For overrides for local testing
-        await _processHandlerService.callProcess(config, seed, "latest");
-        return Ok();
+        var success = await _processHandlerService.callProcess(null, seed, version);
+        return handleResult(success);
 
     }
 
     [HttpPost(template: "patch", Name = "GeneratePatch")]
-    public async Task<IActionResult> GetPatch(string seed, Configuration configuration, string version = "latest")
+    public async Task<IActionResult> GetPatch(string seed, JsonContent configuration, string version = "latest")
     {
         bool newSeed = false;
         if (string.IsNullOrEmpty(seed))
@@ -51,10 +44,10 @@ public class PatchGenerationController : ControllerBase
             newSeed = true;
             seed = new Random().Next().ToString();
         }
-        configuration.OutputSettings.GenerateROM = false;
         _logger.LogInformation("Requested Patch Generation with Uploaded Configuration and seed (new = {newSeed}) {seed} at {time}", newSeed, seed, DateTime.Now);
-        return Ok();
 
+        var success = await _processHandlerService.callProcess(configuration.ToString(), seed, version);
+        return handleResult(success);
     }
 
     [HttpPost(template: "patchWithFile", Name = "GeneratePatchFromFile")]
@@ -62,7 +55,6 @@ public class PatchGenerationController : ControllerBase
     {
         StreamReader reader = new StreamReader(configuration.OpenReadStream());
         String configurationAsString = reader.ReadToEnd();
-        var configurationFromFile = JsonSerializer.Deserialize<Configuration>(configurationAsString);
         bool newSeed = false;
         if (string.IsNullOrEmpty(seed))
         {
@@ -70,24 +62,26 @@ public class PatchGenerationController : ControllerBase
             seed = new Random().Next().ToString();
         }
 
-        if (configurationFromFile == null)
-        {
-            return BadRequest("Could not deserialize config file");
-        }
         _logger.LogInformation("Requested Patch Generation with Uploaded Configuration and seed (new = {newSeed}) {seed} at {time}", newSeed, seed, DateTime.Now);
-        configurationFromFile.OutputSettings.GenerateROM = false;
-        return Ok();
+        var success = await _processHandlerService.callProcess(configurationAsString, seed, version);
+        return handleResult(success);
     }
 
-    private IActionResult handleResult(string? result)
+    private IActionResult handleResult(bool result)
     {
-        var outputPatchFilename = Constants.DefaultConfiguration.OutputSettings.OutputROMFilename.Replace("z64", "mmr");
-        if (result == null)
+        //var outputPatchFilename = Constants.DefaultConfiguration.OutputSettings.OutputROMFilename.Replace("z64", "mmr");
+        if (result)
         {
-            byte[] fileBytes = System.IO.File.ReadAllBytes(outputPatchFilename);
-            return File(fileBytes, "application/force-download", "patch.mmr");
+            if (System.IO.File.Exists("./patchgenerationresults/output.zip"))
+            {
+                System.IO.File.Delete("./patchgenerationresults/output.zip");
+            }
+            System.IO.File.Delete("./patchgenerationresults/output/patch.z64");
+            ZipFile.CreateFromDirectory("./patchgenerationresults/output", "./patchgenerationresults/output.zip");
+            byte[] fileBytes = System.IO.File.ReadAllBytes("./patchgenerationresults/output.zip");
+            return File(fileBytes, "application/force-download", "patch.zip");
         }
 
-        return BadRequest(result);
+        return BadRequest("Process Failure - Better error logging will someday exist.");
     }
 }
