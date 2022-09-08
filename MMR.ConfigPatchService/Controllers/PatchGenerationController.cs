@@ -17,12 +17,12 @@ namespace MMR.ConfigPatchService.Controllers;
 public class PatchGenerationController : ControllerBase
 {
     private readonly ILogger<ConfigController> _logger;
-    private readonly IReflectionService _reflectionService;
+    private readonly IProcessHandlerService _processHandlerService;
 
-    public PatchGenerationController(ILogger<ConfigController> logger, IReflectionService reflectionService)
+    public PatchGenerationController(ILogger<ConfigController> logger, IProcessHandlerService processHandlerService)
     {
         _logger = logger;
-        _reflectionService = reflectionService;
+        _processHandlerService = processHandlerService;
     }
 
     [HttpPost(template: "patch/default", Name = "GeneratePatchWithDefaultConfig")]
@@ -37,7 +37,8 @@ public class PatchGenerationController : ControllerBase
         _logger.LogInformation("Requested Patch Generation with Default Configuration and seed (new = {newSeed}) {seed} at {time}", newSeed, seed, DateTime.Now);
         var config = Constants.DefaultConfiguration;
         config.OutputSettings.GenerateROM = false; //For overrides for local testing
-        return handleResult(await _reflectionService.CallConfigurationProcessorViaVersion(config, version, seed));
+        await _processHandlerService.callProcess(config, seed, "latest");
+        return Ok();
 
     }
 
@@ -52,7 +53,7 @@ public class PatchGenerationController : ControllerBase
         }
         configuration.OutputSettings.GenerateROM = false;
         _logger.LogInformation("Requested Patch Generation with Uploaded Configuration and seed (new = {newSeed}) {seed} at {time}", newSeed, seed, DateTime.Now);
-        return handleResult(await _reflectionService.CallConfigurationProcessorViaVersion(configuration, version, seed));
+        return Ok();
 
     }
 
@@ -75,7 +76,7 @@ public class PatchGenerationController : ControllerBase
         }
         _logger.LogInformation("Requested Patch Generation with Uploaded Configuration and seed (new = {newSeed}) {seed} at {time}", newSeed, seed, DateTime.Now);
         configurationFromFile.OutputSettings.GenerateROM = false;
-        return handleResult(await _reflectionService.CallConfigurationProcessorViaVersion(configurationFromFile, version, seed));
+        return Ok();
     }
 
     private IActionResult handleResult(string? result)

@@ -9,8 +9,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IDependencyService, GithubDependencyService>();
-builder.Services.AddScoped<IReflectionService, MirrorShieldService>();
-
+//builder.Services.AddScoped<IReflectionService, MirrorShieldService>();
+builder.Services.AddScoped<IProcessHandlerService, ProcessHandlerService>();
 
 var app = builder.Build();
 

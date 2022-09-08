@@ -5,7 +5,6 @@ namespace MMR.ConfigPatchService.Services;
 
 using Octokit;
 
-//TODO: Unzip releases
 public class GithubDependencyService : IDependencyService
 {
     private readonly ILogger<GithubDependencyService> _logger;
