@@ -14,7 +14,31 @@ public class ProcessHandlerService : IProcessHandlerService
         _dependencyService = dependencyService;
     }
 
+    public async Task<bool> callProcessActorizerDebugging(string? seed, string version)
+    {
+        var patchDirectory = "./patchgenerationresults";
+        var realVersion = "";
+        if (version == "latest")
+        {
+            realVersion = await _dependencyService.EnsureLatestLibraryPresent();
+        }
+        else
+        {
+            realVersion = await _dependencyService.EnsureSpecificLibraryPresent(version);
+        }
 
+        //Relative to patchDirectory
+        var versionPath = $"{Constants.ReleaseDependencyFolder}/{realVersion}/content";
+        var seedint = 0;
+        if (!int.TryParse(seed, out seedint))
+        {
+            seedint = new Random().Next();
+        }
+
+        string? settingsPath = patchDirectory + "/actorizerTestingSettings.json";
+
+        return await GeneratePatch(versionPath, seedint, "patch", settingsPath);
+    }
     public async Task<bool> callProcess(String? configuration, string? seed, string version)
     {
         var patchDirectory = "./patchgenerationresults";

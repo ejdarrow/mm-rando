@@ -34,7 +34,20 @@ public class PatchGenerationController : ControllerBase
         return handleResult(success);
 
     }
+    [HttpPost(template: "patch/actorizerdebug", Name = "GenerateActorizerTestingPatch")]
+    public async Task<IActionResult> GenerateActorizerTestingPatch(string? seed, string version = "latest")
+    {
+        bool newSeed = false;
+        if (string.IsNullOrEmpty(seed))
+        {
+            newSeed = true;
+            seed = new Random().Next().ToString();
+        }
+        _logger.LogInformation("Requested Patch Generation for actorizer testing with seed (new = {newSeed}) {seed} at {time}", newSeed, seed, DateTime.Now);
+        var success = await _processHandlerService.callProcessActorizerDebugging(seed, version);
+        return handleResult(success);
 
+    }
     [HttpPost(template: "patch", Name = "GeneratePatch")]
     public async Task<IActionResult> GetPatch(string seed, JsonContent configuration, string version = "latest")
     {
