@@ -1,6 +1,7 @@
 ﻿using MMR.Randomizer.Models.Rom;
 using MMR.Randomizer.Utils;
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 
 namespace MMR.Randomizer.Asm
@@ -52,6 +53,32 @@ namespace MMR.Randomizer.Asm
         /// <param name="sym">Symbol name</param>
         /// <returns></returns>
         public uint Resolve(string sym) => AsmAddress + Symbols.Offset(sym);
+
+        /// <summary>
+        /// Try to find the assembly payload file index by looking for the <c>MISC_CONFIG</c> struct magic number.
+        /// </summary>
+        /// <returns></returns>
+        public int? FindAsmIndex()
+        {
+            const uint MISC_CONFIG_MAGIC = 0x4D495343;
+
+            for (var i = RomData.MMFileList.Count - 1; i >= 0; i--)
+            {
+                ReadOnlySpan<byte> span = RomData.MMFileList[i].Data.AsSpan();
+                var offset = Symbols.Offset("MISC_CONFIG");
+                if (span.Length < checked(offset + 4))
+                {
+                    continue;
+                }
+                var value = BinaryPrimitives.ReadUInt32BigEndian(span.Slice(checked((int)offset)));
+                if (value == MISC_CONFIG_MAGIC)
+                {
+                    return i;
+                }
+            }
+
+            return null;
+        }
 
         /// <summary>
         /// Apply configuration which will be hardcoded into the patch file.
@@ -116,6 +143,9 @@ namespace MMR.Randomizer.Asm
         {
             if (patch)
             {
+                // If applying patch file, will need to find the assembly payload file.
+                AsmIndex = FindAsmIndex().Value;
+
                 // If applying post-configuration after applying a patch file, it may be an older
                 // patch file which does not support newer features (and thus would not have the
                 // necessary symbols). Thus, "try" and apply it without throwing an exception if
