@@ -86,15 +86,15 @@ namespace MMR.Randomizer.Asm
             Colors.GoronPunchEnergyEnv1 = options.Extra1;
             Colors.GoronPunchEnergyEnv2 = options.Extra1;
 
-            var inner = Mix(options.Main, Colors.GoronRollInnerEnergyEnv);
+            var inner = Mix(options.Main, WorldColors.Defaults.GoronRollInnerEnergyEnv);
             Colors.GoronRollInnerEnergyEnv = inner.Item1;
             Colors.GoronRollInnerEnergyPrim = inner.Item2;
 
-            var outer1 = Mix(options.Extra1, Colors.GoronRollOuterEnergyEnv1);
+            var outer1 = Mix(options.Extra1, WorldColors.Defaults.GoronRollOuterEnergyEnv1);
             Colors.GoronRollOuterEnergyEnv1 = outer1.Item1;
             Colors.GoronRollOuterEnergyPrim1 = outer1.Item2;
 
-            var outer2 = Mix(options.Extra2, Colors.GoronRollOuterEnergyEnv2);
+            var outer2 = Mix(options.Extra2, WorldColors.Defaults.GoronRollOuterEnergyEnv2);
             Colors.GoronRollOuterEnergyEnv2 = outer2.Item1;
             Colors.GoronRollOuterEnergyPrim2 = outer2.Item2;
 
