@@ -3290,7 +3290,7 @@ namespace MMR.Randomizer
             if (!string.IsNullOrWhiteSpace(outputSettings.InputPatchFilename))
             {
                 progressReporter.ReportProgress(50, "Applying patch...");
-                hash = Patch.Patcher.Apply(outputSettings.InputPatchFilename);
+                hash = Patcher.Apply(outputSettings.InputPatchFilename);
 
                 if (ShouldUseSeedForCosmetics)
                 {
@@ -3388,9 +3388,9 @@ namespace MMR.Randomizer
                 hash = outputSettings.GeneratePatch switch
                 {
                     // Write patch file to path and return hash.
-                    true => Patch.Patcher.Create(Path.ChangeExtension(outputSettings.OutputROMFilename, "mmr")),
+                    true => Patcher.Create(Path.ChangeExtension(outputSettings.OutputROMFilename, "mmr")),
                     // Only return hash.
-                    false => Patch.Patcher.Create(),
+                    false => Patcher.Create(),
                 };
 
                 if (ShouldUseSeedForCosmetics)

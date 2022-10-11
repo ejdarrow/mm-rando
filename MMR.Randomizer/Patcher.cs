@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Numerics;
 
-namespace MMR.Randomizer.Patch
+namespace MMR.Randomizer
 {
     public static class Patcher
     {
@@ -27,7 +27,7 @@ namespace MMR.Randomizer.Patch
         /// <returns></returns>
         public static byte[] Apply(string filePath)
         {
-            return MMR.Patch.Patcher.ApplyPatchEncrypted(filePath, RomData.Files, key, iv);
+            return Patch.Patcher.ApplyPatchEncrypted(filePath, RomData.Files, key, iv);
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace MMR.Randomizer.Patch
         /// <returns></returns>
         public static byte[] Create()
         {
-            return MMR.Patch.Patcher.CreatePatch(RomData.Files);
+            return Patch.Patcher.CreatePatch(RomData.Files);
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace MMR.Randomizer.Patch
         /// <returns></returns>
         public static byte[] Create(string filePath)
         {
-            return MMR.Patch.Patcher.CreatePatchEncrypted(filePath, RomData.Files, key, iv);
+            return Patch.Patcher.CreatePatchEncrypted(filePath, RomData.Files, key, iv);
         }
     }
 }
