@@ -1,9 +1,7 @@
 ﻿using Be.IO;
 using MMR.Common.Extensions;
-using MMR.Randomizer.Models.Rom;
-using MMR.Randomizer.Utils;
+using MMR.Rom;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -41,31 +39,32 @@ namespace MMR.Randomizer.Patch
         /// </summary>
         /// <param name="header">Patch entry header.</param>
         /// <param name="data">Patch entry data.</param>
-        static void ApplyPatchEntry(PatchHeader header, byte[] data)
+        /// <param name="fileTable">File table.</param>
+        /// <exception cref="NotSupportedException"></exception>
+        static void ApplyPatchEntry(PatchHeader header, byte[] data, FileTable fileTable)
         {
-            var address = (int)header.Address;
-            var index = (int)header.Index;
-            if (header.Command == PatchCommand.NewFile)
+            var index = checked((int)header.Index);
+            var file = fileTable[index];
+
+            if (header.Command == PatchCommand.MetaOnly)
             {
-                var newFile = new MMFile
-                {
-                    Addr = address,
-                    IsCompressed = false,
-                    Data = data,
-                    End = address + data.Length,
-                };
-                RomUtils.AppendFile(newFile);
+                file.ApplyMetaInfo(header.AddressRange, header.Storage);
             }
-            else if (header.Command == PatchCommand.ExistingFile)
+            else if (header.Command == PatchCommand.ExistingData)
             {
-                RomUtils.CheckCompressed(index);
-                var original = RomData.MMFileList[index];
-                original.Data = VcDiffDecodeManaged(original.Data, data);
-                if (original.Data.Length == 0)
-                {
-                    original.Cmp_Addr = -1;
-                    original.Cmp_End = -1;
-                }
+                var (original, _) = fileTable.LoadFromRom(index);
+                var patched = VcDiffDecodeManaged(original, data);
+                fileTable.ResizeWithData(index, patched);
+
+                file.ApplyMetaInfo(header.AddressRange, header.Storage);
+            }
+            else if (header.Command == PatchCommand.NewData)
+            {
+                file.ApplyMetaInfoWithData(header.AddressRange, header.Storage, data);
+            }
+            else
+            {
+                throw new NotSupportedException($"Unknown {typeof(PatchCommand).Name}: {(byte)header.Command}");
             }
         }
 
@@ -73,19 +72,21 @@ namespace MMR.Randomizer.Patch
         /// Apply patch data from file at given path to the ROM.
         /// </summary>
         /// <param name="filePath">Patch file path.</param>
+        /// <param name="fileTable"></param>
         /// <returns><see cref="SHA256"/> hash of the patch.</returns>
-        public static byte[] ApplyPatch(string filePath)
+        public static byte[] ApplyPatch(string filePath, FileTable fileTable)
         {
             using var outStream = File.OpenRead(filePath);
-            return ApplyPatch(outStream);
+            return ApplyPatch(outStream, fileTable);
         }
 
         /// <summary>
         /// Apply patch data from given <see cref="Stream"/> to the ROM.
         /// </summary>
         /// <param name="inStream">Input stream.</param>
+        /// <param name="fileTable"></param>
         /// <returns><see cref="SHA256"/> hash of the patch.</returns>
-        public static byte[] ApplyPatch(Stream inStream)
+        public static byte[] ApplyPatch(Stream inStream, FileTable fileTable)
         {
             try
             {
@@ -112,7 +113,7 @@ namespace MMR.Randomizer.Patch
                         reader.ReadExact(headerBytes);
                         var header = PatchHeader.Read(headerBytes);
                         var data = reader.ReadBytes(header.Length);
-                        ApplyPatchEntry(header, data);
+                        ApplyPatchEntry(header, data, fileTable);
                     }
                 }
                 return hashAlg.Hash;
@@ -126,32 +127,32 @@ namespace MMR.Randomizer.Patch
         /// <summary>
         /// Create hash of patch data from current ROM state.
         /// </summary>
-        /// <param name="originalMMFiles">Original <see cref="MMFile"/> collection.</param>
+        /// <param name="fileTable"></param>
         /// <returns><see cref="SHA256"/> hash of the patch.</returns>
-        public static byte[] CreatePatch(List<MMFile> originalMMFiles)
+        public static byte[] CreatePatch(FileTable fileTable)
         {
-            return CreatePatch(Stream.Null, originalMMFiles);
+            return CreatePatch(Stream.Null, fileTable);
         }
 
         /// <summary>
         /// Create patch data from current ROM state and write to a file.
         /// </summary>
         /// <param name="filePath">Output file path.</param>
-        /// <param name="originalMMFiles">Original <see cref="MMFile"/> collection.</param>
+        /// <param name="fileTable"></param>
         /// <returns><see cref="SHA256"/> hash of the patch.</returns>
-        public static byte[] CreatePatch(string filePath, List<MMFile> originalMMFiles)
+        public static byte[] CreatePatch(string filePath, FileTable fileTable)
         {
             using var outStream = File.Open(filePath, FileMode.Create);
-            return CreatePatch(outStream, originalMMFiles);
+            return CreatePatch(outStream, fileTable);
         }
 
         /// <summary>
         /// Create patch data from current ROM state and write to <see cref="Stream"/>.
         /// </summary>
         /// <param name="outStream">Output stream.</param>
-        /// <param name="originalMMFiles">Original <see cref="MMFile"/> collection.</param>
+        /// <param name="fileTable"></param>
         /// <returns><see cref="SHA256"/> hash of the patch.</returns>
-        public static byte[] CreatePatch(Stream outStream, List<MMFile> originalMMFiles)
+        public static byte[] CreatePatch(Stream outStream, FileTable fileTable)
         {
             var aes = Aes.Create();
             var hashAlg = new SHA256Managed();
@@ -164,45 +165,45 @@ namespace MMR.Randomizer.Patch
                 writer.WriteUInt32(PatchMagic);
 
                 Span<byte> headerBytes = stackalloc byte[PatchHeader.Size];
-                for (var fileIndex = 0; fileIndex < RomData.MMFileList.Count; fileIndex++)
+                for (var fileIndex = 0; fileIndex < fileTable.Length; fileIndex++)
                 {
-                    var file = RomData.MMFileList[fileIndex];
+                    var file = fileTable[fileIndex];
+                    ref readonly var orig = ref fileTable.Rom[fileIndex];
+                    var index = checked((ushort)fileIndex);
 
-                    // Check whether file should be included in the patch.
-                    if (file.Data == null || (file.IsCompressed && !file.WasEdited))
+                    if (file.Modified && file.Storage.ContainsData() && orig.Storage.ContainsData())
                     {
-                        continue;
-                    }
+                        var (original, compressed) = fileTable.LoadFromRom(fileIndex);
+                        var diff = VcDiffEncodeManaged(original, file.GetData());
 
-                    if (fileIndex >= originalMMFiles.Count)
-                    {
-                        var index = (uint)fileIndex;
-                        var address = (uint)file.Addr;
-
-                        // Create header for appending new file.
-                        var header = PatchHeader.CreateNew(index, address, file.Data.Length);
-                        header.Write(headerBytes);
-
-                        // Write header bytes and file contents.
-                        writer.Write(headerBytes);
-                        writer.Write(file.Data);
-                    }
-                    else
-                    {
-                        RomUtils.CheckCompressed(fileIndex, originalMMFiles);
-                        var originalFile = originalMMFiles[fileIndex];
-
-                        var index = (uint)fileIndex;
-                        var address = (uint)file.Addr;
-                        var diff = VcDiffEncodeManaged(originalFile.Data, file.Data);
-
-                        // Create header for patching existing file.
-                        var header = PatchHeader.CreateExisting(index, address, diff.Length);
+                        // Create header for patching existing file data.
+                        var header = PatchHeader.CreateExistingData(index, diff.Length, file.AddressRange, file.Storage);
                         header.Write(headerBytes);
 
                         // Write header bytes and diff bytes.
                         writer.Write(headerBytes);
                         writer.Write(diff);
+                    }
+                    else if (file.Modified && file.Storage.ContainsData())
+                    {
+                        var span = file.ToReadOnlySpan();
+
+                        // Create header for writing new file data.
+                        var header = PatchHeader.CreateNewData(index, span.Length, file.AddressRange, file.Storage);
+                        header.Write(headerBytes);
+
+                        // Write header bytes and file bytes.
+                        writer.Write(headerBytes);
+                        writer.Write(span);
+                    }
+                    else if (fileTable.IsMetaModified(fileIndex))
+                    {
+                        // Create header for modifying file meta data.
+                        var header = PatchHeader.CreateMetaOnly(index, file.AddressRange, file.Storage);
+                        header.Write(headerBytes);
+
+                        // Write header bytes.
+                        writer.Write(headerBytes);
                     }
                 }
             }

@@ -150,11 +150,12 @@ namespace MMR.Randomizer.Utils
 
         private static Color[] ReadColours(int fileNumber, int addressInFile, int count)
         {
+            var span = RomData.Files.GetReadOnlySpan(fileNumber);
             Color[] colorArray = new Color[count];
             for (int i = 0; i < count; i++)
             {
                 int colorAddress = addressInFile + (i * 2);
-                ushort rgba = ReadWriteUtils.Arr_ReadU16(RomData.MMFileList[fileNumber].Data, colorAddress);
+                ushort rgba = ReadWriteUtils.Arr_ReadU16(span, colorAddress);
                 colorArray[i] = ColorUtils.FromRGBA5551(rgba);
             }
             return colorArray;
@@ -162,6 +163,7 @@ namespace MMR.Randomizer.Utils
 
         private static void WriteColours(int fileNumber, int addressInFile, int count, Color[] colorArray)
         {
+            var span = RomData.Files.GetSpan(fileNumber);
             for (int i = 0; i < count; i++)
             {
                 int colorAddress = addressInFile + (i * 2);
@@ -171,7 +173,7 @@ namespace MMR.Randomizer.Utils
                     (byte)(rgba >> 8),
                     (byte)(rgba & 0xFF),
                 };
-                ReadWriteUtils.Arr_Insert(data, 0, data.Length, RomData.MMFileList[fileNumber].Data, colorAddress);
+                ReadWriteUtils.Write(span.Slice(colorAddress), data);
             }
         }
 
@@ -180,14 +182,14 @@ namespace MMR.Randomizer.Utils
             for (int j = 0; j < addresses[tunicIndex].Length; j++)
             {
                 int fileInRom = RomUtils.GetFileIndexForWriting(addresses[tunicIndex][j]);
-                int addressInFile = addresses[tunicIndex][j] - RomData.MMFileList[fileInRom].Addr;
+                int addressInFile = addresses[tunicIndex][j] - (int)RomData.Files.GetAddress(fileInRom);
                 Color[] colorArray = ReadColours(fileInRom, addressInFile, paletteSize[tunicIndex]);
                 colorArray = ShiftHue(colorArray, targetColor, paletteSize[tunicIndex], isZora[tunicIndex], isGradientImage[tunicIndex], isFierceDeity[tunicIndex]);
                 WriteColours(fileInRom, addressInFile, paletteSize[tunicIndex], colorArray);
             }
         }
 
-        public static void UpdateKafeiTunic(ref byte[] objectData, Color targetColor)
+        public static void UpdateKafeiTunic(Span<byte> objectData, Color targetColor)
         {
             int[] kafeiPaletteAddress = new int[] { 0xB538, 0xDF68, 0xDF68, 0xD1B0 };
             int[] hairPaletteAvoid = new int[] { 0, 4, 5, 6, 7, 9, 0xB, 0x14, 0x17, 0x18, 0x22, 0x23, 0x31, 0x32, 0x3E, 0x6B, 0x71, 0x8E, 0x100};

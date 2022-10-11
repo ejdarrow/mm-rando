@@ -34,7 +34,7 @@ namespace MMR.Randomizer.Asm
         /// <summary>
         /// Virtual address for assembly payload file.
         /// </summary>
-        public uint AsmAddress => (uint)(RomData.MMFileList[AsmIndex].Addr);
+        public uint AsmAddress => RomData.Files.GetAddress(AsmIndex);
 
         /// <summary>
         /// File index for assembly payload file.
@@ -62,9 +62,9 @@ namespace MMR.Randomizer.Asm
         {
             const uint MISC_CONFIG_MAGIC = 0x4D495343;
 
-            for (var i = RomData.MMFileList.Count - 1; i >= 0; i--)
+            for (var i = RomData.Files.GetTailIndex(); i >= 0; i--)
             {
-                ReadOnlySpan<byte> span = RomData.MMFileList[i].Data.AsSpan();
+                var span = RomData.Files.GetReadOnlySpan(i);
                 var offset = Symbols.Offset("MISC_CONFIG");
                 if (span.Length < checked(offset + 4))
                 {
@@ -79,6 +79,19 @@ namespace MMR.Randomizer.Asm
 
             return null;
         }
+
+        /// Get a <see cref="ReadOnlySpan{T}"/> of data given a symbol name.
+        /// </summary>
+        /// <param name="sym">Symbol name</param>
+        /// <returns></returns>
+        public ReadOnlySpan<byte> GetReadOnlySpan(string sym) => RomData.Files.GetReadOnlySpan(AsmIndex, Resolve(sym));
+
+        /// <summary>
+        /// Get a <see cref="Span{T}"/> of data given a symbol name.
+        /// </summary>
+        /// <param name="sym">Symbol name</param>
+        /// <returns></returns>
+        public Span<byte> GetSpan(string sym) => RomData.Files.GetSpan(AsmIndex, Resolve(sym));
 
         /// <summary>
         /// Apply configuration which will be hardcoded into the patch file.
@@ -178,8 +191,8 @@ namespace MMR.Randomizer.Asm
         /// <returns></returns>
         public MimicItemTable CreateMimicItemTable()
         {
-            var addr = Resolve("ITEM_OVERRIDE_COUNT");
-            var count = ReadWriteUtils.ReadU32((int)addr);
+            var span = GetSpan("ITEM_OVERRIDE_COUNT");
+            var count = ReadWriteUtils.ReadU32(span);
             return new MimicItemTable((int)count);
         }
 
@@ -189,8 +202,8 @@ namespace MMR.Randomizer.Asm
         /// <returns></returns>
         public MessageTable CreateInitialExtMessageTable()
         {
-            var addr = Resolve("EXT_MSG_TABLE_COUNT");
-            var count = ReadWriteUtils.ReadU32((int)addr);
+            var span = GetSpan("EXT_MSG_TABLE_COUNT");
+            var count = ReadWriteUtils.ReadU32(span);
             return new MessageTable(count);
         }
 
@@ -206,11 +219,11 @@ namespace MMR.Randomizer.Asm
         /// <exception cref="Exception"></exception>
         public byte[] ReadHashIconsTable()
         {
-            var addr = Resolve("HASH_ICONS");
-            var count = ReadWriteUtils.ReadU16((int)(addr + 4));
+            var span = GetReadOnlySpan("HASH_ICONS");
+            var count = ReadWriteUtils.ReadU16(span, 4);
             if (count != 0x40)
                 throw new Exception("Bad symbol count for hash icons");
-            var bytes = ReadWriteUtils.ReadBytes((int)(addr + 6), count);
+            var bytes = span.Slice(6, count).ToArray();
             return bytes;
         }
 
@@ -221,10 +234,10 @@ namespace MMR.Randomizer.Asm
         /// <param name="config"></param>
         void WriteAsmConfig(string symbol, AsmConfig config)
         {
-            var addr = Resolve(symbol);
-            var version = ReadWriteUtils.ReadU32((int)(addr + 4));
+            var span = GetSpan(symbol);
+            var version = ReadWriteUtils.ReadU32(span, 4);
             var bytes = config.ToBytes(version);
-            ReadWriteUtils.WriteToROM((int)(addr + 4), bytes);
+            ReadWriteUtils.Write(span.Slice(4), bytes);
         }
 
         /// <summary>
@@ -232,9 +245,9 @@ namespace MMR.Randomizer.Asm
         /// </summary>
         public void WriteClockTownStrayFairyIcon()
         {
-            var addr = Resolve("TOWN_FAIRY_BYTES");
+            var span = GetSpan("TOWN_FAIRY_BYTES");
             var icon = ImageUtils.GetClockTownStrayFairyIcon();
-            ReadWriteUtils.WriteToROM((int)addr, icon);
+            ReadWriteUtils.Write(span, icon);
         }
 
         /// <summary>
@@ -279,12 +292,12 @@ namespace MMR.Randomizer.Asm
         public void WriteExtMessageTable(MessageTable table)
         {
             // Write extended message table entries, and append new file for extended message table data.
-            var addr = Resolve("EXT_MSG_TABLE");
-            var index = MessageTable.WriteExtended(table, addr);
+            var tableSpan = GetSpan("EXT_MSG_TABLE");
+            var index = MessageTable.WriteExtended(table, tableSpan);
 
             // Write index of message table data.
-            var fileIndexAddr = AsmAddress + Symbols.Offset("EXT_MSG_DATA_FILE");
-            ReadWriteUtils.WriteU32ToROM((int)fileIndexAddr, (uint)index);
+            var indexSpan = GetSpan("EXT_MSG_DATA_FILE");
+            ReadWriteUtils.WriteU32(indexSpan, (uint)index);
         }
 
         /// <summary>
@@ -293,15 +306,15 @@ namespace MMR.Randomizer.Asm
         /// <param name="addresses">Tuples containing the virtual ROM start and end addresses</param>
         public void WriteExtendedObjects((uint start, uint end)[] addresses)
         {
-            var addr = (int)Resolve("EXT_OBJECTS");
+            var span = GetSpan("EXT_OBJECTS");
             for (int i = 0; i < addresses.Length; i++)
             {
-                var offset = addr + (i + 1) * 8;
-                var pair = addresses[i];
+                var offset = (i + 1) * 8;
+                var (start, end) = addresses[i];
 
                 // Write start and end VROM addresses for object.
-                ReadWriteUtils.WriteToROM(offset + 0, ConvertUtils.IntToBytes((int)pair.start));
-                ReadWriteUtils.WriteToROM(offset + 4, ConvertUtils.IntToBytes((int)pair.end));
+                ReadWriteUtils.WriteU32(span, offset + 0, start);
+                ReadWriteUtils.WriteU32(span, offset + 4, end);
             }
         }
 
@@ -346,8 +359,8 @@ namespace MMR.Randomizer.Asm
         /// <param name="table"></param>
         public void WriteMimicItemTable(MimicItemTable table)
         {
-            var addr = Resolve("ITEM_OVERRIDE_ENTRIES");
-            ReadWriteUtils.WriteToROM((int)addr, table.Build());
+            var span = GetSpan("ITEM_OVERRIDE_ENTRIES");
+            ReadWriteUtils.Write(span, table.Build());
         }
 
         /// <summary>
@@ -366,8 +379,8 @@ namespace MMR.Randomizer.Asm
         public void WriteMiscHash(byte[] hash)
         {
             var bytes = ReadWriteUtils.CopyBytes(hash, 0x10);
-            var addr = Resolve("MISC_CONFIG");
-            ReadWriteUtils.WriteToROM((int)(addr + 8), bytes);
+            var span = GetSpan("MISC_CONFIG");
+            ReadWriteUtils.Write(span.Slice(8), bytes);
         }
 
         /// <summary>

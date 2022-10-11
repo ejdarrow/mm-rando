@@ -18,17 +18,30 @@ namespace MMR.Randomizer.Utils
         static int GET_ITEM_TABLE = 0;
         public static ushort COLLECTABLE_TABLE_FILE_INDEX { get; private set; } = 0;
 
+        /// <summary>
+        /// Get the file index of <c>gi-table</c>.
+        /// </summary>
+        static int GiTableIndex => RomData.Files.ResolveExactIndex((uint)GET_ITEM_TABLE);
+
         public static void ReplaceGetItemTable()
         {
+            var code = RomData.Files.GetCached(FileIndex.code.ToInt());
+
+            // Handle gi-table.
             ResourceUtils.ApplyHack(Resources.mods.replace_gi_table);
-            int last_file = RomData.MMFileList.Count - 1;
-            GET_ITEM_TABLE = RomUtils.AddNewFile(Resources.mods.gi_table);
-            ReadWriteUtils.WriteToROM(0xBDAEAC, (uint)last_file + 1);
+            var giTable = RomData.Files.Append(Resources.mods.gi_table);
+            GET_ITEM_TABLE = (int)giTable.AddressRange.Start;
+            ReadWriteUtils.WriteS32(code.ToSpan(0xBDAEAC), giTable.Index);
+
+            // Handle chest-table.
             ResourceUtils.ApplyHack(Resources.mods.update_chests);
-            RomUtils.AddNewFile(Resources.mods.chest_table);
-            ReadWriteUtils.WriteToROM(0xBDAEA8, (uint)last_file + 2);
-            RomUtils.AddNewFile(Resources.mods.collectable_table);
-            COLLECTABLE_TABLE_FILE_INDEX = (ushort)(last_file + 3);
+            var chestTable = RomData.Files.Append(Resources.mods.chest_table);
+            ReadWriteUtils.WriteS32(code.ToSpan(0xBDAEA8), chestTable.Index);
+
+            // Handle collectable-table.
+            var collectableTable = RomData.Files.Append(Resources.mods.collectable_table);
+            COLLECTABLE_TABLE_FILE_INDEX = (ushort)collectableTable.Index;
+
             ResourceUtils.ApplyHack(Resources.mods.standing_hearts);
             ResourceUtils.ApplyHack(Resources.mods.fix_item_checks);
             SceneUtils.ResetSceneFlagMask();
@@ -41,12 +54,10 @@ namespace MMR.Randomizer.Utils
         private static void InitGetBottleList()
         {
             RomData.BottleList = new Dictionary<int, BottleCatchEntry>();
-            int f = RomUtils.GetFileIndexForWriting(BOTTLE_CATCH_TABLE);
-            int baseaddr = BOTTLE_CATCH_TABLE - RomData.MMFileList[f].Addr;
-            var fileData = RomData.MMFileList[f].Data;
+            var fileData = RomData.Files.GetReadOnlySpanAt(BOTTLE_CATCH_TABLE);
             foreach (var getBottleItemIndex in ItemUtils.AllGetBottleItemIndices())
             {
-                int offset = getBottleItemIndex * 6 + baseaddr;
+                int offset = getBottleItemIndex * 6;
                 RomData.BottleList[getBottleItemIndex] = new BottleCatchEntry
                 {
                     ItemGained = fileData[offset + 3],
@@ -59,8 +70,7 @@ namespace MMR.Randomizer.Utils
         private static void InitGetItemList()
         {
             RomData.GetItemList = new Dictionary<int, GetItemEntry>();
-            int f = RomUtils.GetFileIndexForWriting(GET_ITEM_TABLE);
-            var fileData = RomData.MMFileList[f].Data;
+            var fileData = RomData.Files.GetReadOnlySpan(GiTableIndex);
             for (var i = 0; i < fileData.Length; i += 8)
             {
                 var getItemIndex = (i / 8) + 1;
@@ -86,13 +96,10 @@ namespace MMR.Randomizer.Utils
         {
             System.Diagnostics.Debug.WriteLine($"Writing {item.Name()} --> {location.Location()}");
 
-            int f = RomUtils.GetFileIndexForWriting(BOTTLE_CATCH_TABLE);
-            int baseaddr = BOTTLE_CATCH_TABLE - RomData.MMFileList[f].Addr;
-            var fileData = RomData.MMFileList[f].Data;
-
+            var span = RomData.Files.GetSpanAt(BOTTLE_CATCH_TABLE);
             foreach (var index in location.GetBottleItemIndices())
             {
-                var offset = index * 6 + baseaddr;
+                var offset = index * 6;
                 var newBottle = RomData.BottleList[item.GetBottleItemIndices()[0]];
                 var data = new byte[]
                 {
@@ -100,7 +107,8 @@ namespace MMR.Randomizer.Utils
                     newBottle.Index,
                     newBottle.Message,
                 };
-                ReadWriteUtils.Arr_Insert(data, 0, data.Length, fileData, offset + 3);
+                var dest = span.Slice(offset + 3, data.Length);
+                ReadWriteUtils.WriteExact(dest, data);
             }
         }
 
@@ -110,6 +118,7 @@ namespace MMR.Randomizer.Utils
             var location = itemObject.NewLocation.Value;
             System.Diagnostics.Debug.WriteLine($"Writing {item.Name()} --> {location.Location()}");
 
+            var span = RomData.Files.GetSpan(COLLECTABLE_TABLE_FILE_INDEX);
             if (!itemObject.IsRandomized)
             {
                 var indices = location.GetCollectableIndices();
@@ -117,17 +126,15 @@ namespace MMR.Randomizer.Utils
                 {
                     foreach (var collectableIndex in location.GetCollectableIndices())
                     {
-                        ReadWriteUtils.Arr_WriteU16(RomData.MMFileList[COLLECTABLE_TABLE_FILE_INDEX].Data, collectableIndex * 2, 0);
+                        ReadWriteUtils.Arr_WriteU16(span, collectableIndex * 2, 0);
                     }
                     return;
                 }
             }
 
-            int f = RomUtils.GetFileIndexForWriting(GET_ITEM_TABLE);
-            int baseaddr = GET_ITEM_TABLE - RomData.MMFileList[f].Addr;
+            var fileData = RomData.Files.GetSpan(GiTableIndex);
             var getItemIndex = location.GetItemIndex().Value;
-            int offset = (getItemIndex - 1) * 8 + baseaddr;
-            var fileData = RomData.MMFileList[f].Data;
+            int offset = (getItemIndex - 1) * 8;
 
             GetItemEntry newItem;
             if (!itemObject.IsRandomized && location.IsNullableItem())
@@ -162,7 +169,7 @@ namespace MMR.Randomizer.Utils
                 (byte)(newItem.Object >> 8),
                 (byte)(newItem.Object & 0xFF),
             };
-            ReadWriteUtils.Arr_Insert(data, 0, data.Length, fileData, offset);
+            ReadWriteUtils.Write(fileData.Slice(offset), data);
 
             int? refillGetItemIndex = item switch
             {
@@ -191,8 +198,8 @@ namespace MMR.Randomizer.Utils
                     (byte)(refillItem.Object >> 8),
                     (byte)(refillItem.Object & 0xFF),
                 };
-                var refillOffset = (refillGetItemIndex.Value - 1) * 8 + baseaddr;
-                ReadWriteUtils.Arr_Insert(refillData, 0, refillData.Length, fileData, refillOffset);
+                var refillOffset = (refillGetItemIndex.Value - 1) * 8;
+                ReadWriteUtils.Write(fileData.Slice(refillOffset), refillData);
             }
 
             if (location.IsRupeeRepeatable())
@@ -296,12 +303,13 @@ namespace MMR.Randomizer.Utils
             {
                 foreach (var address in chestAttribute.Addresses)
                 {
-                    var chestVariable = ReadWriteUtils.Read(address);
+                    var span = RomData.Files.GetSpanAt((uint)address, 1);
+                    var chestVariable = ReadWriteUtils.ReadU8(span);
                     chestVariable &= 0x0F; // remove existing chest type
                     var newChestType = ChestAttribute.GetType(chestType, chestAttribute.Type);
                     newChestType <<= 4;
                     chestVariable |= newChestType;
-                    ReadWriteUtils.WriteToROM(address, chestVariable);
+                    ReadWriteUtils.WriteU8(span, chestVariable);
                 }
             }
 
@@ -310,12 +318,13 @@ namespace MMR.Randomizer.Utils
             {
                 foreach (var address in grottoChestAttribute.Addresses)
                 {
-                    var grottoVariable = ReadWriteUtils.Read(address);
+                    var span = RomData.Files.GetSpanAt((uint)address, 1);
+                    var grottoVariable = ReadWriteUtils.ReadU8(span);
                     grottoVariable &= 0x1F; // remove existing chest type
                     var newChestType = (byte)chestType;
                     newChestType <<= 5;
                     grottoVariable |= newChestType; // add new chest type
-                    ReadWriteUtils.WriteToROM(address, grottoVariable);
+                    ReadWriteUtils.WriteU8(span, grottoVariable);
                 }
             }
         }

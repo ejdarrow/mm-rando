@@ -69,7 +69,8 @@ namespace MMR.Randomizer.Models.SoundEffects
 
             foreach (var address in addresses)
             {
-                ReadWriteUtils.WriteToROM(address, newValue);
+                var span = RomData.Files.GetSpanAt((uint)address);
+                ReadWriteUtils.WriteU16(span, newValue);
             }
 
             return true;

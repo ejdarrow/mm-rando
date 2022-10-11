@@ -1,5 +1,6 @@
 ﻿using MMR.Randomizer.Models.Rom;
 using MMR.Randomizer.Utils;
+using MMR.Rom;
 using System;
 using System.Collections.Generic;
 
@@ -121,8 +122,14 @@ namespace MMR.Randomizer.Asm
         public void WriteToROM(AsmSymbols symbols)
         {
             foreach (var data in _data)
+            {
                 if (TABLE_END <= data.Address && data.Address < symbols.PayloadStart)
-                    ReadWriteUtils.WriteToROM((int)data.Address, data.Data);
+                {
+                    var range = ValueRange.WithLength(data.Address, (uint)data.Data.Length);
+                    var span = RomData.Files.GetSpanAt(range);
+                    ReadWriteUtils.Write(span, data.Data.Span);
+                }
+            }
         }
     }
 }

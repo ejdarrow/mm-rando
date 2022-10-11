@@ -1,8 +1,9 @@
 ﻿namespace MMR.Randomizer.Patch
 {
-    public enum PatchCommand : ushort
+    public enum PatchCommand : byte
     {
-        ExistingFile,
-        NewFile,
+        MetaOnly,
+        ExistingData,
+        NewData,
     }
 }

@@ -12,6 +12,7 @@ using MMR.Randomizer.Models.Settings;
 using MMR.Randomizer.Models;
 using MMR.Common.Utils;
 using MMR.Randomizer.Asm;
+using MMR.Rom;
 
 namespace MMR.Randomizer.Utils
 {
@@ -199,12 +200,10 @@ namespace MMR.Randomizer.Utils
             else if (seq.Name.StartsWith("mm-")) // vanilla mm, look up from audioseq index table
             {
                 // we know code file is already decompressed at this point
-                int codeFID = RomUtils.GetFileIndexForWriting(Addresses.SeqTable);
-                var codeFile = RomData.MMFileList[codeFID];
-                int audioseqIndexTableOffset = Addresses.SeqTable - codeFile.Addr;
-
-                int entryaddr = audioseqIndexTableOffset + (seq.Replaces * 16);
-                var size = (int) ReadWriteUtils.Arr_ReadU32(codeFile.Data, entryaddr + 4);
+                // NOTE: 16 bytes prior to Addresses.SeqTable are used when seq.Replaces == -1, so assume they are relevant.
+                var span = RomData.Files.GetReadOnlySpan(FileIndex.code.ToInt(), Addresses.SeqTable - 16);
+                var entryaddr = (seq.Replaces + 1) * 16;
+                var size = (int) ReadWriteUtils.Arr_ReadU32(span, entryaddr + 4);
                 return RoundTo16(size);
             }
             else // not already loaded, we have to search for the file and look it up
@@ -464,7 +463,7 @@ namespace MMR.Randomizer.Utils
             // checking if not 94 instead if 00 because 94 is vanilla and 00 is replacement
             //  thinking ahead, it's possible the adjusted value will change one day, but vanilla is static
             // if the file's data is null, nothing in that file was changed and therefore it is vanilla.
-            bool shortenedCutscenes = RomData.MMFileList[1472].Data[0xD48 + 3] != 0x94;
+            var shortenedCutscenes = RomData.Files.GetReadOnlySpan(1472).Slice(0xD48 + 3)[0] != 0x94;
 
             if (shortenedCutscenes)
             {
@@ -487,7 +486,7 @@ namespace MMR.Randomizer.Utils
             //   .dh    0x14F9  F9
             // .org 0x80130160    ->
             //   .dh    0x1000       00
-            bool ocarinaNotRandomized = RomData.MMFileList[31].Data[0x8A6A0 + 1] == 0xF9;
+            var ocarinaNotRandomized = RomData.Files.GetReadOnlySpan(31)[0x8A6A0 + 1] == 0xF9;
 
             if (ocarinaNotRandomized)
             {
@@ -542,20 +541,19 @@ namespace MMR.Randomizer.Utils
             }
 
             List<MMSequence> oldSeq = new List<MMSequence>();
-            int f = RomUtils.GetFileIndexForWriting(Addresses.SeqTable);
-            int basea = RomData.MMFileList[f].Addr;
-
+            var view = RomData.Files.GetReadOnlySpan(FileIndex.code.ToInt(), Addresses.SeqTable);
             for (int i = 0; i < 128; i++)
             {
                 MMSequence entry = new MMSequence();
 
-                int entryaddr = Addresses.SeqTable + (i * 16);
-                entry.Addr = (int)ReadWriteUtils.Arr_ReadU32(RomData.MMFileList[f].Data, entryaddr - basea);
-                var size = (int)ReadWriteUtils.Arr_ReadU32(RomData.MMFileList[f].Data, (entryaddr - basea) + 4);
+                int entryaddr = i * 16;
+                entry.Addr = (int)ReadWriteUtils.Arr_ReadU32(view, entryaddr);
+                var size = (int)ReadWriteUtils.Arr_ReadU32(view, entryaddr + 4);
                 if (size > 0)
                 {
                     entry.Data = new byte[size];
-                    Array.Copy(RomData.MMFileList[4].Data, entry.Addr, entry.Data, 0, entry.Size);
+                    var src = RomData.Files.GetReadOnlySpan(4).Slice(entry.Addr);
+                    ReadWriteUtils.Copy(entry.Data, src);
                 }
                 else
                 {
@@ -688,28 +686,25 @@ namespace MMR.Randomizer.Utils
             int index = RomUtils.AppendFile(newAudioSeq);
             ResourceUtils.ApplyHack(Resources.mods.reloc_audio);
             RelocateSeq(index);
-            RomData.MMFileList[4].Data = new byte[0];
-            RomData.MMFileList[4].Addr = RomData.MMFileList[4].End;
-            RomData.MMFileList[4].Cmp_Addr = -1;
-            RomData.MMFileList[4].Cmp_End = -1;
+            RomData.Files.DeleteAndShrink(FileIndex.Audioseq.ToInt(), AddressDirection.Right);
 
             //update sequence index pointer table
-            f = RomUtils.GetFileIndexForWriting(Addresses.SeqTable);
+            var span = RomData.Files.GetSpan(FileIndex.code.ToInt(), Addresses.SeqTable);
             for (int i = 0; i < 128; i++)
             {
-                ReadWriteUtils.Arr_WriteU32(RomData.MMFileList[f].Data, (Addresses.SeqTable + (i * 16)) - basea, (uint)newSeq[i].Addr);
-                ReadWriteUtils.Arr_WriteU32(RomData.MMFileList[f].Data, 4 + (Addresses.SeqTable + (i * 16)) - basea, (uint)newSeq[i].Size);
+                var offset = i * 16;
+                ReadWriteUtils.WriteU32(span.Slice(offset), (uint)newSeq[i].Addr);
+                ReadWriteUtils.WriteU32(span.Slice(offset + 4), (uint)newSeq[i].Size);
             }
 
             //update inst sets used by each new seq
             // this is NOT the audiobank, its the complementary instrument set value for each sequence
             //   IE, sequence 7 uses instrument set "10", we replaced it with sequnece ae which needs bank "23"
-            f = RomUtils.GetFileIndexForWriting(Addresses.InstSetMap);
-            basea = RomData.MMFileList[f].Addr;
+            span = RomData.Files.GetSpan(FileIndex.code.ToInt(), Addresses.InstSetMap);
             for (int i = 0; i < 128; i++)
             {
                 // huh? paddr? pointer? padding?
-                int paddr = (Addresses.InstSetMap - basea) + (i * 2) + 2;
+                var paddr = (i * 2) + 2;
 
                 int j = -1;
                 if (newSeq[i].Size == 0) // pointer, we need to copy the instrumnet set from the destination
@@ -725,7 +720,7 @@ namespace MMR.Randomizer.Utils
 
                 if (j != -1)
                 {
-                    RomData.MMFileList[f].Data[paddr] = (byte)sequenceList[j].Instrument;
+                    span[paddr] = (byte)sequenceList[j].Instrument;
 
                     if (sequenceMaskFileIndex.HasValue)
                     {
@@ -740,7 +735,8 @@ namespace MMR.Randomizer.Utils
                         formMask = Enumerable.Repeat<byte>(0xFF, 16).ToArray();
                     }
                     Array.Resize(ref formMask, MusicConfig.SEQUENCE_DATA_SIZE);
-                    ReadWriteUtils.Arr_Insert(formMask, 0, MusicConfig.SEQUENCE_DATA_SIZE, RomData.MMFileList[sequenceMaskFileIndex.Value].Data, i * MusicConfig.SEQUENCE_DATA_SIZE);
+                    var sequenceData = RomData.Files.GetSpan(sequenceMaskFileIndex.Value).Slice(i * MusicConfig.SEQUENCE_DATA_SIZE, MusicConfig.SEQUENCE_DATA_SIZE);
+                    formMask.AsSpan().CopyTo(sequenceData);
                 }
 
             }
@@ -785,8 +781,9 @@ namespace MMR.Randomizer.Utils
         public static void MoveAudioBankTableToFile(AsmSymbols symbols)
         {
             // grab original audiobanktable out of code, plus extra for modifying
-            var table = ReadWriteUtils.ReadBytes(0xB3C000 + 0x13B6C0, 0x820);
-            New_AudioBankTable = RomUtils.AddNewFile(table);
+            var table = RomData.Files.GetReadOnlySpan(FileIndex.code.ToInt()).Slice(0x13B6C0, 0x820).ToArray();
+            var appended = RomData.Files.Append(table);
+            New_AudioBankTable = (int)appended.AddressRange.Start;
 
             // instrumentset_patch: modifies audiobank metadata read and writes, instrument/drum/sfx pointer read and writes,
             // nops a metadata copy function, and sets a fixed size for the audiobank pointer index
@@ -810,30 +807,32 @@ namespace MMR.Randomizer.Utils
             ReadWriteUtils.WriteCodeNOP(0x80190E80);
 
             var tableAddr = 0x80720000 + (symbols.PayloadEnd - symbols.PayloadStart); //payload ram address + length
-            ReadWriteUtils.WriteU32ToROM(0xC776C0, tableAddr); //RAM address to move audiobanktable into
+            var fileData = appended.AddressRange.Start;
 
-            int f = RomUtils.GetFileIndexForWriting(New_AudioBankTable);
-            var fileData = RomData.MMFileList[f].Addr;
-            ReadWriteUtils.WriteToROM(0xC776C4, (uint)fileData ); //VROM address of new audiobanktable
-            ReadWriteUtils.WriteU32ToROM(0xC776C8, 0x00000820); //file length
-
-            NewInstrumentSetAddress = RomData.MMFileList[f].Addr + 0x10;
-
-            ReadWriteUtils.WriteU16ToROM(RomData.MMFileList[f].Addr, 0x0080); // Increase AudioBankTable amount
-
-            // insert dummy metadata (kamaro's dance bank duplicates)
-            int dummybankindexOffset = NewInstrumentSetAddress + 0x280;
-            int totaldummybanks = 0x58;
-            ulong dummybankmetadata0 = 0x00021880000000D0;
-            ulong dummybankmetadata1 = 0x020101FF01000000;
-
-            for (int dummybankIndex = 0; dummybankIndex <= totaldummybanks; ++dummybankIndex)
             {
-                ReadWriteUtils.WriteU64ToROM(dummybankindexOffset, dummybankmetadata0);
-                ReadWriteUtils.WriteU64ToROM(dummybankindexOffset + 0x08, dummybankmetadata1);
-                dummybankindexOffset += 0x10;
+                var span = RomData.Files.GetSpan(FileIndex.code.ToInt(), 0xC776C0);
+                ReadWriteUtils.WriteU32(span.Slice(0), tableAddr); // RAM address to move audiobanktable into
+                ReadWriteUtils.WriteU32(span.Slice(4), fileData); // VROM address of new audiobanktable
+                ReadWriteUtils.WriteU32(span.Slice(8), 0x00000820); // file length
             }
-            
+
+            {
+                NewInstrumentSetAddress = (int)appended.AddressRange.Start + 0x10;
+                var span = appended.ToSpan();
+                ReadWriteUtils.WriteU16(span, 0x0080); // Increase AudioBankTable amount
+
+                // insert dummy metadata (kamaro's dance bank duplicates)
+                const int totaldummybanks = 0x58;
+                const ulong dummybankmetadata0 = 0x00021880000000D0;
+                const ulong dummybankmetadata1 = 0x020101FF01000000;
+
+                for (int dummybankIndex = 0; dummybankIndex <= totaldummybanks; ++dummybankIndex)
+                {
+                    var offset = 0x10 + 0x280 + (dummybankIndex * 0x10);
+                    ReadWriteUtils.WriteU64(span.Slice(offset + 0), dummybankmetadata0);
+                    ReadWriteUtils.WriteU64(span.Slice(offset + 8), dummybankmetadata1);
+                }
+            }
         }
 
         public static void ResetFreeBankIndex()
@@ -1094,13 +1093,11 @@ namespace MMR.Randomizer.Utils
                     log.AppendLine($" -- ^ -- Instrument set number {validSequence.Instrument.ToString("X2")} also used by {validSequence.Name}");
 
                     // set the scene to use this new song slot for background music
-                    RomUtils.CheckCompressed(sceneFID);
-                    var scene = RomData.MMFileList[sceneFID].Data;
+                    var scene = RomData.Files.GetSpan(sceneFID);
                     scene[musicOffset] = (byte) newSlot;
                 }
                 // mute the previous music by killing the sfx actor which plays the filtered shop music
-                RomUtils.CheckCompressed(roomFID);
-                var room = RomData.MMFileList[roomFID].Data;
+                var room = RomData.Files.GetSpan(roomFID);
                 room[actorIDOffset]   = 0xFF; // kill the sfx actor by setting its room slot ID to -1
                 room[actorIDOffset+1] = 0xFF;
             }
@@ -1292,29 +1289,27 @@ namespace MMR.Randomizer.Utils
             //  we can get this from the Romdata.SceneList but this only gets populated on enemizer
             //  and we don't NEED to populate it since vanilla scenes are static, we can just hard code it here
             //  at re-encode, we'll have fewer decoded files to re-encode too
-            int swamp_spider_house_fid = 1284; // taken from ultimate MM spreadsheet (US File list -> A column)
+            const int swamp_spider_house_fid = 1284; // taken from ultimate MM spreadsheet (US File list -> A column)
+            var swamp = RomData.Files.GetSpan(swamp_spider_house_fid);
 
             // scan the files for the header that contains scene music (0x15 first byte)
             // 15xx0000 0000yyzz where zz is the sequence pointer byte
-            RomUtils.CheckCompressed(swamp_spider_house_fid);
             for (int b = 0; b < 0x10 * 70; b += 8)
             {
-                if (RomData.MMFileList[swamp_spider_house_fid].Data[b] == 0x15
-                    && RomData.MMFileList[swamp_spider_house_fid].Data[b + 0x7] == 0x3B)
+                if (swamp[b] == 0x15 && swamp[b + 0x7] == 0x3B)
                 {
-                    RomData.MMFileList[swamp_spider_house_fid].Data[b + 0x7] = replacement_slot;
+                    swamp[b + 0x7] = replacement_slot;
                     break;
                 }
             }
 
-            int ocean_spider_house_fid = 1291; // taken from ultimate MM spreadsheet
-            RomUtils.CheckCompressed(ocean_spider_house_fid);
+            const int ocean_spider_house_fid = 1291; // taken from ultimate MM spreadsheet
+            var ocean = RomData.Files.GetSpan(ocean_spider_house_fid);
             for (int b = 0; b < 0x10 * 70; b += 8)
             {
-                if (RomData.MMFileList[ocean_spider_house_fid].Data[b] == 0x15
-                    && RomData.MMFileList[ocean_spider_house_fid].Data[b + 0x7] == 0x3B)
+                if (ocean[b] == 0x15 && ocean[b + 0x7] == 0x3B)
                 {
-                    RomData.MMFileList[ocean_spider_house_fid].Data[b + 0x7] = replacement_slot;
+                    ocean[b + 0x7] = replacement_slot;
                     break;
                 }
             }
@@ -1369,7 +1364,7 @@ namespace MMR.Randomizer.Utils
             }
         }
 
-        public static void UpdateBankInstrumentPointers(byte[] ROM)
+        public static void UpdateBankInstrumentPointers(RomFile rom)
         {
             /// the audiobank and new samples are already written to rom, now we need to go back and update all the pointers
             ///   since we cannot know where those samples are on the rom until A) the soundbank is written, and B) the sample file is written
@@ -1380,8 +1375,9 @@ namespace MMR.Randomizer.Utils
                 return;
             }
 
-            int soundbankAddr = RomData.MMFileList[5].Cmp_Addr; // in vanilla it's 0x97f70 but MMR can shift it up because AudioSeq gets re-located
-            int audiobankInstSetAddr = RomData.MMFileList[3].Cmp_Addr; // pointer to specific instrument set, starting with 0, updating per loop
+            var soundbankAddr = (int)rom[5].PhysicalStart; // in vanilla it's 0x97f70 but MMR can shift it up because AudioSeq gets re-located
+            var audiobankInstSet = rom.GetSpan(3); // pointer to specific instrument set, starting with 0, updating per loop
+            var offset = 0;
             foreach (var instrumentset in RomData.InstrumentSetList)
             {
                 if (instrumentset.InstrumentSamples != null && instrumentset.InstrumentSamples.Count > 0)
@@ -1390,30 +1386,24 @@ namespace MMR.Randomizer.Utils
                     {
                         // for each sample if the bank uses sample, lookup new rom for the sample
                         //   get soundbank offset for said address: address of collection + offset of specific sample in collection, minus soundbank
-                        int soundbankSampleOffset = RomData.MMFileList[RomData.SamplesFileID].Cmp_Addr
+                        int soundbankSampleOffset = (int)rom[RomData.SamplesFileID].PhysicalStart
                                                       + (int)RomData.ListOfSamples.Find(u => u.Hash == sample.Hash).Addr
                                                       - soundbankAddr;
-                        byte[] sampleOffsetBytes = BitConverter.GetBytes(soundbankSampleOffset);
-                        byte[] markerBytes = BitConverter.GetBytes(sample.Marker);
 
                         // find the location in the bank where the Sample Marker is
                         //   per byte, replace with the bytes from SampleOffsetBytes
                         for (int i = 0; i < (instrumentset.BankBinary.Length - 4); i += 1)
                         {
-                            if (ROM[audiobankInstSetAddr + i + 0] == markerBytes[3]
-                                && ROM[audiobankInstSetAddr + i + 1] == markerBytes[2]
-                                && ROM[audiobankInstSetAddr + i + 2] == markerBytes[1]
-                                && ROM[audiobankInstSetAddr + i + 3] == markerBytes[0])
+                            var slice = audiobankInstSet.Slice(offset + i);
+                            var current = ReadWriteUtils.ReadU32(slice);
+                            if (current == sample.Marker)
                             {
-                                ROM[audiobankInstSetAddr + i + 0] = sampleOffsetBytes[3];
-                                ROM[audiobankInstSetAddr + i + 1] = sampleOffsetBytes[2];
-                                ROM[audiobankInstSetAddr + i + 2] = sampleOffsetBytes[1];
-                                ROM[audiobankInstSetAddr + i + 3] = sampleOffsetBytes[0];
+                                ReadWriteUtils.WriteS32(slice, soundbankSampleOffset);
                             }
                         }
                     }
                 }
-                audiobankInstSetAddr += instrumentset.BankBinary.Length;
+                offset += instrumentset.BankBinary.Length;
             }
         }
 
@@ -1428,7 +1418,7 @@ namespace MMR.Randomizer.Utils
             // issue: we don't know right now where the samples will be written to, because BuildRom will shift the files
             //  for now we write samples, after audiobank/soundbank/samples are written, we'll update audiobank pointers
             // save extra soundsamples fid, and the samples with their data, for later (UpdateBankInstrumentPointers())
-            int fid = RomData.SamplesFileID = RomUtils.AppendFile(new byte[0x0]);
+            var data = new byte[0x0];
             RomData.ListOfSamples = new List<SequenceSoundSampleBinaryData>();
 
             // for each custom instrument set that needs a custom sample
@@ -1443,14 +1433,14 @@ namespace MMR.Randomizer.Utils
                         if (previouslyWrittenSample == null) // if sample not already written once before
                         {
                             // get the rom addr of our new file, our file will start at the end of the last file
-                            sample.Addr = (uint)RomData.MMFileList[fid].Data.Length;
+                            sample.Addr = (uint)data.Length;
                             // concat our sample to sample collection file
-                            RomData.MMFileList[fid].Data = RomData.MMFileList[fid].Data.Concat(sample.BinaryData).ToArray();
+                            data = data.Concat(sample.BinaryData).ToArray();
                             // I don't know if samples need to be padded to 0x10 like sequences but might as well
-                            int paddingRemainder = RomData.MMFileList[fid].Data.Length % 0x10;
+                            int paddingRemainder = data.Length % 0x10;
                             if (paddingRemainder > 0)
                             {
-                                RomData.MMFileList[fid].Data = RomData.MMFileList[fid].Data.Concat(new byte[paddingRemainder]).ToArray();
+                                data = data.Concat(new byte[paddingRemainder]).ToArray();
                             }
                             RomData.ListOfSamples.Add(sample);
                         }
@@ -1462,15 +1452,15 @@ namespace MMR.Randomizer.Utils
                 }
             }
 
+            var appended = RomData.Files.Append(data);
+            RomData.SamplesFileID = appended.Index;
         }
 
         public static void RebuildAudioBank(List<InstrumentSetInfo> InstrumentSetList)
         {
             // get index for the old audiobank, we're putting it back in the same spot but letting it expand into audioseq's spot, which was moved to the end
-            int fid = RomUtils.GetFileIndexForWriting(NewInstrumentSetAddress);
             // the DMA table doesn't point directly to the indextable on the rom, its part of a larger yaz0 file, we have to use an offset to get the address in the file
-            int audiobankIndexOffset = NewInstrumentSetAddress - RomData.MMFileList[RomUtils.GetFileIndexForWriting(NewInstrumentSetAddress)].Addr;
-
+            var span = RomData.Files.GetSpanAt((uint)NewInstrumentSetAddress);
             int audiobankBankOffset = 0;
             var audiobankData = new byte[0];
 
@@ -1481,24 +1471,16 @@ namespace MMR.Randomizer.Utils
                 var currentBank = InstrumentSetList[audiobankIndex];
                 audiobankData = audiobankData.Concat(currentBank.BankBinary).ToArray();
 
+                var offset = audiobankIndex * 16;
                 // update address of the bank in the index table
-                RomData.MMFileList[fid].Data[audiobankIndexOffset + (audiobankIndex * 16) + 0] = (byte)((audiobankBankOffset & 0xFF000000) >> 24);
-                RomData.MMFileList[fid].Data[audiobankIndexOffset + (audiobankIndex * 16) + 1] = (byte)((audiobankBankOffset & 0xFF0000) >> 16);
-                RomData.MMFileList[fid].Data[audiobankIndexOffset + (audiobankIndex * 16) + 2] = (byte)((audiobankBankOffset & 0xFF00) >> 8);
-                RomData.MMFileList[fid].Data[audiobankIndexOffset + (audiobankIndex * 16) + 3] = (byte)(audiobankBankOffset & 0xFF);
-
+                ReadWriteUtils.WriteS32(span, offset + 0, audiobankBankOffset);
                 // update length of the bank in the table
                 int currentBankLength = currentBank.BankBinary.Length;
-                RomData.MMFileList[fid].Data[audiobankIndexOffset + (audiobankIndex * 16) + 4] = (byte)((currentBankLength & 0xFF000000) >> 24);
-                RomData.MMFileList[fid].Data[audiobankIndexOffset + (audiobankIndex * 16) + 5] = (byte)((currentBankLength & 0xFF0000) >> 16);
-                RomData.MMFileList[fid].Data[audiobankIndexOffset + (audiobankIndex * 16) + 6] = (byte)((currentBankLength & 0xFF00) >> 8);
-                RomData.MMFileList[fid].Data[audiobankIndexOffset + (audiobankIndex * 16) + 7] = (byte)(currentBankLength & 0xFF);
+                ReadWriteUtils.WriteS32(span, offset + 4, currentBankLength);
 
                 // update metadata of the bank in the table
-                for (int metadataIter = 0; metadataIter < 8; ++metadataIter)
-                {
-                    RomData.MMFileList[fid].Data[audiobankIndexOffset + (audiobankIndex * 16) + 8 + metadataIter] = currentBank.BankMetaData[metadataIter];
-                }
+                var metadata = currentBank.BankMetaData.AsSpan(0, 8);
+                ReadWriteUtils.Write(span.Slice(offset + 8), metadata);
 
                 // adjust the address for the next bank to use
                 audiobankBankOffset += currentBankLength;
@@ -1511,9 +1493,7 @@ namespace MMR.Randomizer.Utils
             }
 
             // write new audiobank back to file
-            var audiobankFile = RomData.MMFileList[RomUtils.GetFileIndexForWriting(Addresses.Audiobank)];
-            audiobankFile.Data = audiobankData;
-            audiobankFile.End = audiobankFile.Addr + audiobankFile.Data.Length;
+            RomData.Files.ResizeWithData(FileIndex.Audiobank.ToInt(), audiobankData);
         }
     }
 }

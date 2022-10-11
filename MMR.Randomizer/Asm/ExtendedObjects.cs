@@ -573,15 +573,13 @@ namespace MMR.Randomizer.Asm
         #region Static Helper Functions
 
         /// <summary>
-        /// Clone data from an existing <see cref="Models.Rom.MMFile"/>.
+        /// Clone data from an existing file.
         /// </summary>
         /// <param name="fileIndex">Existing file index</param>
         /// <returns>Cloned data as bytes</returns>
         static byte[] CloneExistingData(int fileIndex)
         {
-            RomUtils.CheckCompressed(fileIndex);
-            var clone = RomData.MMFileList[fileIndex].Data.Clone();
-            return (byte[])clone;
+            return RomData.Files.GetReadOnlySpan(fileIndex).ToArray();
         }
 
         /// <summary>
