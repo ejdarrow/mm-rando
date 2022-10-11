@@ -69,15 +69,30 @@ namespace MMR.Randomizer.Patch
         }
 
         /// <summary>
-        /// Apply patch data from file at given path to the ROM.
+        /// Apply encrypted patch data from file at given path to the ROM.
         /// </summary>
         /// <param name="filePath">Patch file path.</param>
         /// <param name="fileTable"></param>
         /// <returns><see cref="SHA256"/> hash of the patch.</returns>
-        public static byte[] ApplyPatch(string filePath, FileTable fileTable)
+        public static byte[] ApplyPatchEncrypted(string filePath, FileTable fileTable)
         {
             using var outStream = File.OpenRead(filePath);
-            return ApplyPatch(outStream, fileTable);
+            return ApplyPatchEncrypted(outStream, fileTable);
+        }
+
+        /// <summary>
+        /// Apply encrypted patch data from given <see cref="Stream"/> to the ROM.
+        /// </summary>
+        /// <param name="inStream">Input stream.</param>
+        /// <param name="fileTable"></param>
+        /// <returns><see cref="SHA256"/> hash of the patch.</returns>
+        public static byte[] ApplyPatchEncrypted(Stream inStream, FileTable fileTable)
+        {
+            var aes = Aes.Create();
+            using (var cryptoStream = new CryptoStream(inStream, aes.CreateDecryptor(key, iv), CryptoStreamMode.Read))
+            {
+                return ApplyPatch(cryptoStream, fileTable);
+            }
         }
 
         /// <summary>
@@ -90,10 +105,8 @@ namespace MMR.Randomizer.Patch
         {
             try
             {
-                var aes = Aes.Create();
                 var hashAlg = new SHA256Managed();
-                using (var cryptoStream = new CryptoStream(inStream, aes.CreateDecryptor(key, iv), CryptoStreamMode.Read))
-                using (var hashStream = new CryptoStream(cryptoStream, hashAlg, CryptoStreamMode.Read))
+                using (var hashStream = new CryptoStream(inStream, hashAlg, CryptoStreamMode.Read))
                 using (var decompressStream = new GZipStream(hashStream, CompressionMode.Decompress))
                 using (var memoryStream = new MemoryStream())
                 {
@@ -135,15 +148,30 @@ namespace MMR.Randomizer.Patch
         }
 
         /// <summary>
-        /// Create patch data from current ROM state and write to a file.
+        /// Create encrypted patch data from current ROM state and write to a file.
         /// </summary>
         /// <param name="filePath">Output file path.</param>
         /// <param name="fileTable"></param>
         /// <returns><see cref="SHA256"/> hash of the patch.</returns>
-        public static byte[] CreatePatch(string filePath, FileTable fileTable)
+        public static byte[] CreatePatchEncrypted(string filePath, FileTable fileTable)
         {
             using var outStream = File.Open(filePath, FileMode.Create);
-            return CreatePatch(outStream, fileTable);
+            return CreatePatchEncrypted(outStream, fileTable);
+        }
+
+        /// <summary>
+        /// Create encrypted patch data from current ROM state and write to <see cref="Stream"/>.
+        /// </summary>
+        /// <param name="outStream">Output stream.</param>
+        /// <param name="fileTable"></param>
+        /// <returns></returns>
+        public static byte[] CreatePatchEncrypted(Stream outStream, FileTable fileTable)
+        {
+            var aes = Aes.Create();
+            using (var cryptoStream = new CryptoStream(outStream, aes.CreateEncryptor(key, iv), CryptoStreamMode.Write))
+            {
+                return CreatePatch(cryptoStream, fileTable);
+            }
         }
 
         /// <summary>
@@ -154,10 +182,8 @@ namespace MMR.Randomizer.Patch
         /// <returns><see cref="SHA256"/> hash of the patch.</returns>
         public static byte[] CreatePatch(Stream outStream, FileTable fileTable)
         {
-            var aes = Aes.Create();
             var hashAlg = new SHA256Managed();
-            using (var cryptoStream = new CryptoStream(outStream, aes.CreateEncryptor(key, iv), CryptoStreamMode.Write))
-            using (var hashStream = new CryptoStream(cryptoStream, hashAlg, CryptoStreamMode.Write))
+            using (var hashStream = new CryptoStream(outStream, hashAlg, CryptoStreamMode.Write))
             using (var compressStream = new GZipStream(hashStream, CompressionMode.Compress))
             using (var writer = new BeBinaryWriter(compressStream))
             {
