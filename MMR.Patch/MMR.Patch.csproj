@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Be.IO-multi" Version="1.0.0" />
+    <PackageReference Include="VCDiff" Version="3.2.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MMR.Common\MMR.Common.csproj" />
+    <ProjectReference Include="..\MMR.Rom\MMR.Rom.csproj" />
+  </ItemGroup>
+
+</Project>

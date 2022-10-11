@@ -1,4 +1,4 @@
-﻿namespace MMR.Randomizer.Patch
+﻿namespace MMR.Patch
 {
     public enum PatchCommand : byte
     {

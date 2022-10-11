@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MMR.Randomizer.Patch
+namespace MMR.Patch
 {
     public class PatchMagicException : Exception
     {
