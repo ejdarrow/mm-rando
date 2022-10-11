@@ -3276,6 +3276,11 @@ namespace MMR.Randomizer
             _extraMessages.Add(entry);
         }
 
+        /// <summary>
+        /// Whether or not to use seed number instead of patch hash for cosmetic randomization.
+        /// </summary>
+        const bool ShouldUseSeedForCosmetics = false;
+
         public void MakeROM(OutputSettings outputSettings, IProgressReporter progressReporter)
         {
             RomUtils.ReadFileTable(outputSettings.InputROMFilename);
@@ -3286,6 +3291,11 @@ namespace MMR.Randomizer
             {
                 progressReporter.ReportProgress(50, "Applying patch...");
                 hash = Patch.Patcher.ApplyPatch(outputSettings.InputPatchFilename, RomData.Files);
+
+                if (ShouldUseSeedForCosmetics)
+                {
+                    throw new NotSupportedException();
+                }
 
                 // Apply Asm configuration post-patch
                 WriteAsmConfigPostPatch(asm, hash);
@@ -3382,6 +3392,13 @@ namespace MMR.Randomizer
                     // Only return hash.
                     false => Patch.Patcher.CreatePatch(RomData.Files),
                 };
+
+                if (ShouldUseSeedForCosmetics)
+                {
+                    var seedBytes = new byte[4];
+                    ReadWriteUtils.WriteS32(seedBytes, _randomized.Seed);
+                    hash = SHA256.HashData(seedBytes);
+                }
 
                 // Write subset of Asm config post-patch
                 WriteAsmConfig(asm, hash);
