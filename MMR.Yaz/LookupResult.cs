@@ -57,7 +57,7 @@ namespace MMR.Yaz
         /// <param name="result">Existing <see cref="LookupResult"/>.</param>
         /// <returns></returns>
         /// <remarks>Using <c>ref</c> for input due to it being faster when inlined?</remarks>
-        public static LookupResult ClearIfNotSkipped(ref LookupResult result)
+        public static LookupResult ClearIfNotSkipped(scoped in LookupResult result)
         {
             if (!result.SkipByte)
             {

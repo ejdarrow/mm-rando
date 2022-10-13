@@ -233,7 +233,7 @@ namespace MMR.Yaz
                 }
 
                 // Update result state.
-                result = LookupResult.ClearIfNotSkipped(ref result);
+                result = LookupResult.ClearIfNotSkipped(in result);
 
                 // Update command bit index.
                 commandBit = (commandBit + 1) % 8;
@@ -253,7 +253,7 @@ namespace MMR.Yaz
         static LookupResult Lookup(
             ReadOnlySpan<byte> src,
             int position,
-            ref RevolvingBufferTracker<int> window,
+            scoped ref RevolvingBufferTracker<int> window,
             Span<int> recents)
         {
             // Get offset to previous index of current byte value.
@@ -334,7 +334,7 @@ namespace MMR.Yaz
         static LookupResult LookupWithAhead(
             ReadOnlySpan<byte> src,
             int position,
-            ref RevolvingBufferTracker<int> window,
+            scoped ref RevolvingBufferTracker<int> window,
             Span<int> recents)
         {
             var result1 = Lookup(src, position, ref window, recents);
@@ -370,7 +370,7 @@ namespace MMR.Yaz
         static void Remember(
             ReadOnlySpan<byte> src,
             int position,
-            ref RevolvingBufferTracker<int> window,
+            scoped ref RevolvingBufferTracker<int> window,
             Span<int> recents)
         {
             // Updates both Recents and Window.
