@@ -1,0 +1,1 @@
+﻿This folder is used for holding local copies of fixed release versions so that the patcher can pin patch objects to specific builds.

@@ -1,0 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Color palettes from tailwindcss. */
+  --violet-100: rgb(237 233 254);
+  --violet-200: rgb(221 214 254);
+  --violet-300: rgb(196 181 253);
+  --violet-400: rgb(167, 139, 250);
+  --violet-500: rgb(139 92 246);
+  --violet-600: rgb(124, 58, 237);
+  --violet-700: rgb(109 40 217);
+  --violet-800: rgb(91 33 182);
+  --violet-900: rgb(76 29 149);
+}
+
+:root[data-theme='dark'] {
+  --app-background: #0c0018;
+
+  --app-neutral-background: #141515;
+  --app-neutral-text: #d6d4d2;
+  --app-selection-background: #004daa;
+  --app-selection-text: #e8e6e3;
+  --app-scrollbar-color-1: #474a4b;
+  --app-scrollbar-color-2: #212323;
+
+  --app-border-color: #e5e7eb;
+  --app-border-inverse-color: #1c1b22;
+
+  --app-darker: rgba(0, 0, 0, 0.5);
+
+  --app-select-background-color: var(--app-neutral-background);
+  --app-select-border-color: #404040;
+  --app-select-arrow-color: var(--app-select-border-color);
+}
+
+:root {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  color: #ccc;
+  scrollbar-color: var(--app-scrollbar-color-1) var(--app-scrollbar-color-2);
+}
+
+:root[data-theme='dark'] input {
+  accent-color: var(--violet-500);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'InterVariable', sans-serif;
+  scrollbar-gutter: stable;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: var(--app-background);
+}
+
+input[type='text'] {
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+}
+
+.flex-center {
+  align-items: center;
+  display: flex;
+  place-content: center;
+}
+
+.hidden-vertical-scrollbar {
+  overflow-y: scroll;
+  visibility: hidden;
+}
+
+.my-app-bg {
+  background-color: var(--app-background);
+}
+
+.my-bubble {
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 0.625rem;
+  color: #eee;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  font-weight: bold;
+  font-size: 1rem;
+  line-height: 1.5em;
+  padding: 0.175rem 0.75rem;
+}
+
+.my-outline {
+  outline-color: var(--app-border-color);
+  outline-style: solid;
+  outline-width: 2px;
+}
+
+.my-outline-with-border {
+  border: solid 2px var(--app-border-inverse-color);
+  outline-color: var(--app-border-color);
+  outline-style: solid;
+  outline-width: 2px;
+}
+
+.my-outline-with-thin-border {
+  border: solid 1px var(--app-border-inverse-color);
+  outline-color: var(--app-border-color);
+  outline-style: solid;
+  outline-width: 2px;
+}
+
+.my-outline-with-thin-border-inverted {
+  border: solid 1px var(--app-border-color);
+  outline-color: var(--app-border-inverse-color);
+  outline-style: solid;
+  outline-width: 2px;
+}
+
+.my-separator {
+  background-color: var(--violet-500);
+  background-image: linear-gradient(to bottom right, var(--violet-400), var(--violet-700));
+}
+
+.my-text-shadow-border-black {
+  text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+}
+
+.my-text-shadow-border-white {
+  text-shadow: -1px 0 white, 0 1px white, 1px 0 white, 0 -1px white;
+}
+
+.my-text-shadow-border-darker {
+  text-shadow: -1px 0 var(--app-darker), 0 1px var(--app-darker), 1px 0 var(--app-darker), 0 -1px var(--app-darker);
+}
+
+:root[data-theme='dark'] .my-text-shadow-border {
+  text-shadow: -1px 0 white, 0 1px white, 1px 0 white, 0 -1px white;
+}
+
+.rando-component-head {
+  border-radius: 0.5rem 0.5rem 0 0;
+  min-height: 3rem;
+  font-size: 1.5rem;
+  text-indent: 1rem;
+  line-height: 3rem;
+  color: #fff;
+}
+
+.rando-component-body {
+  border-radius: 0 0 1rem 1rem;
+}

@@ -9,6 +9,9 @@
 *.n64
 *.wad
 
+# Web Application Patch Generation Files
+*/patchgenerationresults/patch*
+*/ReleaseLibraries/*/
 
 # User-specific files
 *.rsuser
@@ -354,3 +357,4 @@ healthchecksdb
 # Backup folder for Package Reference Convert tool in Visual Studio 2017
 MigrationBackup/
 .DS_Store
+*/.DS_Store
