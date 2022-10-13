@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MMR.Rom;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -8,7 +9,7 @@ namespace MMR.Randomizer.Utils
 
     public class ResourceUtils
     {
-        public static void ApplyHack(byte[] hack_content)
+        public static void ApplyHack(ReadOnlySpan<byte> hack_content)
         {
             int addr = 0;
             while (hack_content[addr] != 0xFF)
@@ -18,9 +19,11 @@ namespace MMR.Randomizer.Utils
                 addr += 4;
                 uint len = ReadWriteUtils.Arr_ReadU32(hack_content, addr);
                 addr += 4;
-                int f = RomUtils.GetFileIndexForWriting((int)dest);
-                dest -= (uint)RomData.MMFileList[f].Addr;
-                ReadWriteUtils.Arr_Insert(hack_content, addr, (int)len, RomData.MMFileList[f].Data, (int)dest);
+                var range = ValueRange.WithLength(dest, len);
+                var index = RomData.Files.ResolveIndex(range);
+                var span = RomData.Files.GetSpan(index, range);
+                var source = hack_content.Slice(addr, (int)len);
+                ReadWriteUtils.WriteExact(span, source);
                 addr += (int)len;
             }
         }

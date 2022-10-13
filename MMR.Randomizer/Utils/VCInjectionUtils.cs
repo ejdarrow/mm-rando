@@ -1,6 +1,7 @@
 ﻿using Be.IO;
 using MMR.Common.Extensions;
 using MMR.Randomizer.Asm;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -26,7 +27,7 @@ namespace MMR.Randomizer.Utils
         /// </summary>
         static readonly int DPAD_MAPPING_OFFSET = 0x148512;
 
-        private static void GetApp5(byte[] ROM, string VCDir)
+        private static void GetApp5(ReadOnlySpan<byte> ROM, string VCDir)
         {
             BinaryReader a50 = new BinaryReader(File.OpenRead(Path.Combine(VCDir, "5-0")));
             BinaryReader a51 = new BinaryReader(File.OpenRead(Path.Combine(VCDir, "5-1")));
@@ -48,13 +49,13 @@ namespace MMR.Randomizer.Utils
             File.Delete(Path.Combine(VCDir, "00000005.app"));
         }
 
-        private static byte[] AddVCHeader(byte[] ROM)
+        private static byte[] AddVCHeader(ReadOnlySpan<byte> ROM)
         {
             byte[] Header = new byte[] { 0x08, 0x00, 0x00, 0x00 };
-            return Header.Concat(ROM).ToArray();
+            return ReadWriteUtils.Concat(Header, ROM);
         }
 
-        public static void BuildVC(byte[] ROM, DPadConfig dpadConfig, string VCDir, string FileName)
+        public static void BuildVC(ReadOnlySpan<byte> ROM, DPadConfig dpadConfig, string VCDir, string FileName)
         {
             ROM = AddVCHeader(ROM);
             GetApp5(ROM, VCDir);

@@ -20,7 +20,7 @@ namespace MMR.Randomizer.Utils
                 {
                     continue;
                 }
-                ReadWriteUtils.Arr_WriteU16(RomData.MMFileList[f].Data, setup.ExitListAddress.Value + exitIndex * 2, spawnId);
+                ReadWriteUtils.Arr_WriteU16(RomData.Files.GetSpan(f), setup.ExitListAddress.Value + exitIndex * 2, spawnId);
             }
         }
 
@@ -33,7 +33,7 @@ namespace MMR.Randomizer.Utils
             {
                 return;
             }
-            ReadWriteUtils.Arr_WriteU16(RomData.MMFileList[f].Data, setup.CutsceneListAddress.Value + cutsceneIndex * 8 + 4, spawnId);
+            ReadWriteUtils.Arr_WriteU16(RomData.Files.GetSpan(f), setup.CutsceneListAddress.Value + cutsceneIndex * 8 + 4, spawnId);
         }
     }
 }

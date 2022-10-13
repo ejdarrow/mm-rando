@@ -1,7 +1,7 @@
-﻿using MMR.Randomizer.Constants;
+﻿using MMR.Patch;
+using MMR.Randomizer.Constants;
 using MMR.Randomizer.Models;
 using MMR.Randomizer.Models.Settings;
-using MMR.Randomizer.Patch;
 using MMR.Randomizer.Utils;
 using System;
 using System.Diagnostics;

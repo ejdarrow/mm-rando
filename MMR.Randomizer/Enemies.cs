@@ -290,16 +290,16 @@ namespace MMR.Randomizer
             /// if they have combat music is determined if a flag is set in the seventh byte
             /// disabling combat music means disabling this bit for most enemies
             int actorFileID = (int)actor;
-            RomUtils.CheckCompressed(actorFileID);
+            var span = RomData.Files.GetSpan(actorFileID);
             int actorFlagLocation = (actorInitVarRomAddr + 7);// - RomData.MMFileList[ActorFID].Addr; // file offset
-            byte flagByte = RomData.MMFileList[actorFileID].Data[actorFlagLocation];
-            RomData.MMFileList[actorFileID].Data[actorFlagLocation] = (byte)(flagByte & 0xFB);
+            byte flagByte = span[actorFlagLocation];
+            span[actorFlagLocation] = (byte)(flagByte & 0xFB);
 
             if (actor == GameObjects.Actor.DekuBabaWithered) // special case: when they regrow music returns
             {
                 // when they finish regrowing their combat music bit is reset, we need to no-op this to stop it
                 // 	[ori t3,t1,0x0005] which is [35 2B 00 05] becomes [35 2B 00 01] as the 4 bit is combat music, 1 is R-targetable
-                RomData.MMFileList[actorFileID].Data[0x12BF] = 0x01;
+                span[0x12BF] = 0x01;
             }
         }
 

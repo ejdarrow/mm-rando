@@ -13,6 +13,11 @@ namespace MMR.Yaz
         public const int MaxCompare = 0xFF + 0x12;
 
         /// <summary>
+        /// Whether or not to keep output-compatibility with Nintendo for minor performance loss.
+        /// </summary>
+        const bool NintendoCompatible = false;
+
+        /// <summary>
         /// Calculate maximum possible length of data if it were encoded. Does not include length of header.
         /// </summary>
         /// <param name="decodedLength">Length of decoded data.</param>
@@ -295,7 +300,8 @@ namespace MMR.Yaz
                         result = new LookupResult(searchPosition, matches);
 
                         // If we have found a matching string with the max compare size, return early.
-                        if (result.Length == MaxCompare)
+                        // NOTE: By short-circuiting we break output-compatibility with Nintendo's implementation.
+                        if (result.Length == MaxCompare && !NintendoCompatible)
                         {
                             break;
                         }

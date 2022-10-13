@@ -31,8 +31,7 @@ namespace MMR.Randomizer.Utils
         public static byte[][] GetStrayFairyIcons()
         {
             // Stray Fairy icons start at: 0xA0A000 + 0x1B80
-            RomUtils.CheckCompressed(11);
-            var fileData = RomData.MMFileList[11].Data;
+            var span = RomData.Files.GetReadOnlySpan(11);
 
             // Extract HUD icon for Stray Fairy icons.
             var fairies = new List<byte[]>(4);
@@ -40,7 +39,8 @@ namespace MMR.Randomizer.Utils
             {
                 var imageData = new byte[0xC00];
                 var offset = 0x1B80 + (imageData.Length * i);
-                Buffer.BlockCopy(fileData, offset, imageData, 0, imageData.Length);
+                var source = span.Slice(offset, imageData.Length);
+                ReadWriteUtils.Write(imageData, source);
                 fairies.Add(imageData);
             }
 

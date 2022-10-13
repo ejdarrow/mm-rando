@@ -1,5 +1,6 @@
 ﻿using MMR.Randomizer.Models.SoundEffects;
 using MMR.Randomizer.Utils;
+using MMR.Rom;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -185,16 +186,19 @@ namespace MMR.Randomizer.Models.Rom
         public static MessageTable ReadFromROM(uint start, uint end, int fileIndex)
         {
             uint length = (end - start) / 8;
+            var range = new ValueRange(start, end + 8);
+            var span = RomData.Files.GetReadOnlySpanAt(range);
+            var dataFile = RomData.Files.GetReadOnlySpan(fileIndex);
             var entries = new Dictionary<ushort, MessageEntry>();
 
             for (uint i = 0; i < length; i++)
             {
                 // Read MessageTable entry data (text Id and offset).
-                int addr = (int)(start + (i * 8));
-                var textId = ReadWriteUtils.ReadU16(addr);
-                var offset = ReadWriteUtils.ReadU32(addr + 4) & 0xFFFFFF;
+                var slice = span.Slice((int)(i * 8));
+                var textId = ReadWriteUtils.ReadU16(slice);
+                var offset = ReadWriteUtils.ReadU32(slice, 4) & 0xFFFFFF;
 
-                var nextOffset = ReadWriteUtils.ReadU32(addr + 0xC) & 0xFFFFFF;
+                var nextOffset = ReadWriteUtils.ReadU32(slice, 0xC) & 0xFFFFFF;
                 var size = nextOffset > 0 ? nextOffset - offset - 11 : 5; // "end!\xBF"
                 
                 // Check if terminator record.
@@ -204,14 +208,13 @@ namespace MMR.Randomizer.Models.Rom
                 }
 
                 // Read MessageEntry from data file.
-                var dataFile = RomData.MMFileList[fileIndex];
-                var entry = MessageEntry.FromBytes(textId, dataFile.Data, (int)offset, (int)size);
+                var entry = MessageEntry.FromBytes(textId, dataFile, (int)offset, (int)size);
 
                 entries.Add(textId, entry);
             }
 
             // Calculate maximum message data length from existing file.
-            var maxDataLength = (uint)(RomData.MMFileList[fileIndex + 1].Addr - RomData.MMFileList[fileIndex].Addr);
+            var maxDataLength = RomData.Files.GetAvailableAddressRange(fileIndex, AddressDirection.Right).Length;
 
             return new MessageTable(entries, maxDataLength);
         }
@@ -260,28 +263,25 @@ namespace MMR.Randomizer.Models.Rom
             var (tableBytes, dataBytes) = table.BuildData();
 
             // Calculate offset of table in respective file.
-            var tableStart = (int)MessageTableRange.Item1;
-            var index = RomUtils.AddrToFile(tableStart);
-            var tableFile = RomData.MMFileList[index];
-            var tableOffset = tableStart - tableFile.Addr;
+            var (start, end) = MessageTableRange;
+            var range = new ValueRange(start, end);
+            var tableSpan = RomData.Files.GetSpan(FileIndex.code.ToInt(), range);
 
             // Write message table in-place.
-            Buffer.BlockCopy(tableBytes, 0, tableFile.Data, tableOffset, tableBytes.Length);
+            ReadWriteUtils.Copy(tableSpan, tableBytes);
 
             // Update message data file.
-            var file = RomData.MMFileList[MessageDataFile];
-            file.Data = dataBytes;
-            file.End = file.Addr + file.Data.Length;
+            RomData.Files.ResizeWithData(MessageDataFile, dataBytes);
         }
 
         /// <summary>
         /// Write an extended <see cref="MessageTable"/> to a specific address, and append a new file with the message data.
         /// </summary>
         /// <param name="table"><see cref="MessageTable"/> to write</param>
-        /// <param name="addr">Address to write table</param>
+        /// <param name="span">Span to write to</param>
         /// <param name="addDummy">Whether or not to add a final dummy entry</param>
         /// <returns>Message data file index</returns>
-        public static int WriteExtended(MessageTable table, uint addr, bool addDummy = true)
+        public static int WriteExtended(MessageTable table, Span<byte> span, bool addDummy = true)
         {
             if (addDummy)
             {
@@ -293,7 +293,7 @@ namespace MMR.Randomizer.Models.Rom
             var (tableBytes, dataBytes) = table.BuildData();
 
             // Write message table in-place.
-            ReadWriteUtils.WriteToROM((int)addr, tableBytes);
+            ReadWriteUtils.Write(span, tableBytes);
 
             // Write extended message data as own file.
             var index = RomUtils.AppendFile(dataBytes);

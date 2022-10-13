@@ -69,12 +69,12 @@ namespace MMR.Randomizer.Asm
         /// </summary>
         public void PatchObjects()
         {
-            var playerActor = RomData.MMFileList[38];
+            var playerActor = RomData.Files.GetSpan(38);
             PatchHumanEnergyColors(ObjUtils.GetObjectData(1));
-            PatchDekuEnergyColors(playerActor.Data);
+            PatchDekuEnergyColors(playerActor);
             PatchGoronEnergyColors(ObjUtils.GetObjectData(0x14C));
             PatchZoraEnergyColors(ObjUtils.GetObjectData(0x14D));
-            PatchFierceDeityEnergyColors(playerActor.Data);
+            PatchFierceDeityEnergyColors(playerActor);
         }
 
         public override IAsmConfigStruct ToStruct(uint version)

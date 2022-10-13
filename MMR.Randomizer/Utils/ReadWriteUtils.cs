@@ -1,5 +1,7 @@
 ﻿using MMR.Randomizer.Models.Rom;
+using MMR.Rom;
 using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Runtime.CompilerServices;
 
@@ -9,11 +11,12 @@ namespace MMR.Randomizer.Utils
     public static class ReadWriteUtils
     {
 
-        public static void WriteFileAddr(int[] Addr, byte[] data, byte[] file)
+        public static void WriteFileAddr(int[] Addr, byte[] data, Span<byte> file)
         {
             for (int i = 0; i < Addr.Length; i++)
             {
-                Arr_Insert(data, 0, data.Length, file, Addr[i]);
+                var offset = Addr[i];
+                data.CopyTo(file.Slice(offset, data.Length));
             }
         }
 
@@ -29,58 +32,33 @@ namespace MMR.Randomizer.Utils
                     rdata[0] += 0xA;
                     rdata[1] -= 0x70;
                 }
-                int f = RomUtils.GetFileIndexForWriting(rAddr);
-                int dest = rAddr - RomData.MMFileList[f].Addr;
-                Arr_Insert(rdata, 0, rdata.Length, RomData.MMFileList[f].Data, dest);
+                var span = RomData.Files.GetSpanAt((uint)rAddr);
+                rdata.CopyTo(span);
             }
         }
 
         public static void WriteToROM(int Addr, byte val)
         {
-            int f = RomUtils.GetFileIndexForWriting(Addr);
-            int dest = Addr - RomData.MMFileList[f].Addr;
-            RomData.MMFileList[f].Data[dest] = val;
+            var span = RomData.Files.GetSpanAt((uint)Addr);
+            span[0] = val;
         }
 
         public static void WriteToROM(int Addr, ushort val)
         {
-            int f = RomUtils.GetFileIndexForWriting(Addr);
-            int dest = Addr - RomData.MMFileList[f].Addr;
-            var data = new byte[]
-            {
-                (byte)((val & 0xFF00) >> 8),
-                (byte)(val & 0xFF)
-            };
-            Arr_Insert(data, 0, data.Length, RomData.MMFileList[f].Data, dest);
+            var span = RomData.Files.GetSpanAt((uint)Addr);
+            BinaryPrimitives.WriteUInt16BigEndian(span, val);
         }
 
         public static void WriteToROM(int Addr, uint val)
         {
-            int f = RomUtils.GetFileIndexForWriting(Addr);
-            int dest = Addr - RomData.MMFileList[f].Addr;
-            var data = new byte[]
-            {
-                (byte)((val & 0xFF000000) >> 24),
-                (byte)((val & 0xFF0000) >> 16),
-                (byte)((val & 0xFF00) >> 8),
-                (byte)(val & 0xFF)
-            };
-            Arr_Insert(data, 0, data.Length, RomData.MMFileList[f].Data, dest);
+            var span = RomData.Files.GetSpanAt((uint)Addr);
+            BinaryPrimitives.WriteUInt32BigEndian(span, val);
         }
 
-        public static void WriteToROM(int Addr, byte[] val)
+        public static void WriteToROM(int Addr, ReadOnlySpan<byte> val)
         {
-            int f = RomUtils.GetFileIndexForWriting(Addr);
-            int dest = Addr - RomData.MMFileList[f].Addr;
-            Arr_Insert(val, 0, val.Length, RomData.MMFileList[f].Data, dest);
-        }
-
-        public static void WriteToROM(int Addr, ReadOnlyMemory<byte> val)
-        {
-            int f = RomUtils.GetFileIndexForWriting(Addr);
-            int dest = Addr - RomData.MMFileList[f].Addr;
-            var memory = new Memory<byte>(RomData.MMFileList[f].Data);
-            val.CopyTo(memory.Slice(dest));
+            var span = RomData.Files.GetSpanAt((uint)Addr);
+            val.CopyTo(span);
         }
 
         public static void Arr_Insert(byte[] src, int start, int len, byte[] dest, int addr)
@@ -101,38 +79,34 @@ namespace MMR.Randomizer.Utils
             return (ushort)(((val & 0xFF) << 8) | ((val & 0xFF00) >> 8));
         }
 
-        public static uint Arr_ReadU32(byte[] Arr, int Src)
+        public static uint Arr_ReadU32(ReadOnlySpan<byte> span, int start)
         {
-            return (uint)((Arr[Src] << 24) | (Arr[Src + 1] << 16) | (Arr[Src + 2] << 8) | Arr[Src + 3]);
+            return BinaryPrimitives.ReadUInt32BigEndian(span.Slice(start));
         }
 
-        public static int Arr_ReadS32(byte[] Arr, int Src)
+        public static int Arr_ReadS32(ReadOnlySpan<byte> span, int start)
         {
-            return (Arr[Src] << 24) | (Arr[Src + 1] << 16) | (Arr[Src + 2] << 8) | Arr[Src + 3];
+            return BinaryPrimitives.ReadInt32BigEndian(span.Slice(start));
         }
 
-        public static ushort Arr_ReadU16(byte[] Arr, int Src)
+        public static ushort Arr_ReadU16(ReadOnlySpan<byte> span, int start)
         {
-            return (ushort)((Arr[Src] << 8) | (Arr[Src + 1]));
+            return BinaryPrimitives.ReadUInt16BigEndian(span.Slice(start));
         }
 
-        public static short Arr_ReadS16(byte[] Arr, int Src)
+        public static short Arr_ReadS16(ReadOnlySpan<byte> span, int start)
         {
-            return (short)((Arr[Src] << 8) | (Arr[Src + 1]));
+            return BinaryPrimitives.ReadInt16BigEndian(span.Slice(start));
         }
 
-        public static void Arr_WriteU32(byte[] Arr, int Dest, uint val)
+        public static void Arr_WriteU32(Span<byte> span, int start, uint value)
         {
-            Arr[Dest] = (byte)((val & 0xFF000000) >> 24);
-            Arr[Dest + 1] = (byte)((val & 0xFF0000) >> 16);
-            Arr[Dest + 2] = (byte)((val & 0xFF00) >> 8);
-            Arr[Dest + 3] = (byte)(val & 0xFF);
+            BinaryPrimitives.WriteUInt32BigEndian(span.Slice(start), value);
         }
 
-        public static void Arr_WriteU16(byte[] Arr, int Dest, ushort val)
+        public static void Arr_WriteU16(Span<byte> span, int start, ushort value)
         {
-            Arr[Dest] = (byte)((val & 0xFF00) >> 8);
-            Arr[Dest + 1] = (byte)(val & 0xFF);
+            BinaryPrimitives.WriteUInt16BigEndian(span.Slice(start), value);
         }
 
         public static uint ReadU32(BinaryReader ROM)
@@ -162,36 +136,174 @@ namespace MMR.Randomizer.Utils
 
         public static ushort ReadU16(int address)
         {
-            int f = RomUtils.GetFileIndexForWriting(address);
-            int src = address - RomData.MMFileList[f].Addr;
-            return (ushort)((RomData.MMFileList[f].Data[src] << 8)
-                + RomData.MMFileList[f].Data[src + 1]);
+            var span = RomData.Files.GetReadOnlySpanAt((uint)address);
+            return BinaryPrimitives.ReadUInt16BigEndian(span);
         }
 
         public static uint ReadU32(int address)
         {
-            int f = RomUtils.GetFileIndexForWriting(address);
-            int src = address - RomData.MMFileList[f].Addr;
-            return (uint)((RomData.MMFileList[f].Data[src] << 24)
-                | (RomData.MMFileList[f].Data[src + 1] << 16)
-                | (RomData.MMFileList[f].Data[src + 2] << 8)
-                | (RomData.MMFileList[f].Data[src + 3]));
+            var span = RomData.Files.GetReadOnlySpanAt((uint)address);
+            return BinaryPrimitives.ReadUInt32BigEndian(span);
+        }
+
+        public static byte ReadU8(ReadOnlySpan<byte> span)
+        {
+            return span[0];
+        }
+
+        public static byte ReadU8(ReadOnlySpan<byte> span, int start)
+        {
+            return span[start];
+        }
+
+        public static short ReadS16(ReadOnlySpan<byte> span)
+        {
+            return BinaryPrimitives.ReadInt16BigEndian(span);
+        }
+
+        public static short ReadS16(ReadOnlySpan<byte> span, int start)
+        {
+            return BinaryPrimitives.ReadInt16BigEndian(span.Slice(start));
+        }
+
+        public static int ReadS32(ReadOnlySpan<byte> span)
+        {
+            return BinaryPrimitives.ReadInt32BigEndian(span);
+        }
+
+        public static int ReadS32(ReadOnlySpan<byte> span, int start)
+        {
+            return BinaryPrimitives.ReadInt32BigEndian(span.Slice(start));
+        }
+
+        public static ushort ReadU16(ReadOnlySpan<byte> span)
+        {
+            return BinaryPrimitives.ReadUInt16BigEndian(span);
+        }
+
+        public static ushort ReadU16(ReadOnlySpan<byte> span, int start)
+        {
+            return BinaryPrimitives.ReadUInt16BigEndian(span.Slice(start));
+        }
+
+        public static uint ReadU32(ReadOnlySpan<byte> span)
+        {
+            return BinaryPrimitives.ReadUInt32BigEndian(span);
+        }
+
+        public static uint ReadU32(ReadOnlySpan<byte> span, int start)
+        {
+            return BinaryPrimitives.ReadUInt32BigEndian(span.Slice(start));
+        }
+
+        public static void WriteU8(Span<byte> span, byte value)
+        {
+            span[0] = value;
+        }
+
+        public static void WriteU8(Span<byte> span, int start, byte value)
+        {
+            span[start] = value;
+        }
+
+        public static void WriteU16(Span<byte> span, ushort value)
+        {
+            BinaryPrimitives.WriteUInt16BigEndian(span, value);
+        }
+
+        public static void WriteU16(Span<byte> span, int start, ushort value)
+        {
+            BinaryPrimitives.WriteUInt16BigEndian(span.Slice(start), value);
+        }
+
+        public static void WriteU32(Span<byte> span, uint value)
+        {
+            BinaryPrimitives.WriteUInt32BigEndian(span, value);
+        }
+
+        public static void WriteU32(Span<byte> span, int start, uint value)
+        {
+            BinaryPrimitives.WriteUInt32BigEndian(span.Slice(start), value);
+        }
+
+        public static void WriteU64(Span<byte> span, ulong value)
+        {
+            BinaryPrimitives.WriteUInt64BigEndian(span, value);
+        }
+
+        public static void WriteS16(Span<byte> span, short value)
+        {
+            BinaryPrimitives.WriteInt16BigEndian(span, value);
+        }
+
+        public static void WriteS32(Span<byte> span, int value)
+        {
+            BinaryPrimitives.WriteInt32BigEndian(span, value);
+        }
+
+        public static void WriteS32(Span<byte> span, int start, int value)
+        {
+            BinaryPrimitives.WriteInt32BigEndian(span.Slice(start), value);
+        }
+
+        public static ValueRange ReadValueRange(ReadOnlySpan<byte> span)
+        {
+            return ValueRange.Read(span);
+        }
+
+        public static void WriteValueRange(Span<byte> span, ValueRange range)
+        {
+            range.Write(span);
+        }
+
+        public static byte[] Concat(ReadOnlySpan<byte> a, ReadOnlySpan<byte> b)
+        {
+            var dest = new byte[checked(a.Length + b.Length)];
+            var span = dest.AsSpan();
+            a.CopyTo(span);
+            b.CopyTo(span.Slice(a.Length));
+            return dest;
+        }
+
+        /// <summary>
+        /// Copy source bytes into an equal or smaller sized destination buffer.
+        /// </summary>
+        /// <param name="dest"></param>
+        /// <param name="src"></param>
+        public static void Copy(Span<byte> dest, ReadOnlySpan<byte> src)
+        {
+            src.Slice(0, dest.Length).CopyTo(dest);
+        }
+
+        /// <summary>
+        /// Write source bytes into an equal or larger sized destination buffer.
+        /// </summary>
+        /// <param name="dest"></param>
+        /// <param name="src"></param>
+        public static void Write(Span<byte> dest, ReadOnlySpan<byte> src)
+        {
+            src.CopyTo(dest);
+        }
+
+        public static void WriteExact(Span<byte> dest, ReadOnlySpan<byte> src)
+        {
+            if (dest.Length != src.Length)
+            {
+                throw new ArgumentException("Destination buffer length must match source buffer length.");
+            }
+            src.CopyTo(dest);
         }
 
         public static byte Read(int address)
         {
-            int f = RomUtils.GetFileIndexForWriting(address);
-            int src = address - RomData.MMFileList[f].Addr;
-            return RomData.MMFileList[f].Data[src];
+            var span = RomData.Files.GetReadOnlySpanAt((uint)address);
+            return span[0];
         }
 
         public static byte[] ReadBytes(int address, uint count)
         {
-            var f = RomUtils.GetFileIndexForWriting(address);
-            var src = address - RomData.MMFileList[f].Addr;
-            var bytes = new byte[count];
-            Array.Copy(RomData.MMFileList[f].Data, src, bytes, 0, count);
-            return bytes;
+            var span = RomData.Files.GetReadOnlySpanAt((uint)address, count);
+            return span.ToArray();
         }
 
         /// <summary>
@@ -254,23 +366,65 @@ namespace MMR.Randomizer.Utils
         const uint CodeRAMStart = 0x800A5AC0;
 
         /// <summary>
-        /// Get the <see cref="MMFile"/> at a <see cref="FileIndex"/>.
-        /// </summary>
-        /// <param name="index">File index.</param>
-        /// <returns></returns>
-        static MMFile GetFile(FileIndex index)
-        {
-            RomUtils.CheckCompressed((int)index);
-            return RomData.MMFileList[(int)index];
-        }
-
-        /// <summary>
         /// Write a <c>NOP</c> instruction to the <c>code</c> file.
         /// </summary>
         /// <param name="vram">VRAM address within loaded <c>code</c> file.</param>
         public static void WriteCodeNOP(uint vram)
         {
             WriteCodeUInt32(vram, 0);
+        }
+
+        /// <summary>
+        /// Get hi and lo values for a <c>lui</c>/<c>addiu</c> instruction pair.
+        /// </summary>
+        /// <param name="value">Full value</param>
+        /// <returns></returns>
+        public static (ushort, ushort) GetMipsSignedHiLo(uint value)
+        {
+            ushort hi = (ushort)(value >> 16);
+            ushort lo = (ushort)(value & 0xFFFF);
+            if (0x8000 <= lo)
+            {
+                return ((ushort)(hi + 1), lo);
+            }
+            return (hi, lo);
+        }
+
+        /// <summary>
+        /// Write value for a <c>lui</c>/<c>addiu</c> instruction pair.
+        /// </summary>
+        /// <param name="address">Address of contiguous instructions</param>
+        /// <param name="value">Full value</param>
+        public static void WriteCodeSignedHiLo(uint address, uint value)
+        {
+            WriteCodeSignedHiLo(address, address + 4, value);
+        }
+
+        /// <summary>
+        /// Write value for a <c>lui</c>/<c>addiu</c> instruction pair.
+        /// </summary>
+        /// <param name="hiAddress">Address of <c>lui</c> instruction</param>
+        /// <param name="loAddress">Address of <c>addiu</c> instruction</param>
+        /// <param name="value">Full value</param>
+        public static void WriteCodeSignedHiLo(uint hiAddress, uint loAddress, uint value)
+        {
+            var span = RomData.Files.GetSpan(FileIndex.code.ToInt());
+            var hiSpan = span.Slice((int)(hiAddress - CodeRAMStart), 4);
+            var loSpan = span.Slice((int)(loAddress - CodeRAMStart), 4);
+            WriteMipsSignedHiLo(hiSpan, loSpan, value);
+        }
+
+        /// <summary>
+        /// Write value for a <c>lui</c>/<c>addiu</c> instruction pair.
+        /// </summary>
+        /// <param name="hiSpan">Hi instruction span</param>
+        /// <param name="loSpan">Lo instruction span</param>
+        /// <param name="value">Full value</param>
+        public static void WriteMipsSignedHiLo(Span<byte> hiSpan, Span<byte> loSpan, uint value)
+        {
+            var (hi, lo) = GetMipsSignedHiLo(value);
+            BinaryPrimitives.WriteUInt16BigEndian(hiSpan.Slice(2, 2), hi);
+            BinaryPrimitives.WriteUInt16BigEndian(loSpan.Slice(2, 2), lo);
         }
 
         /// <summary>
@@ -281,8 +435,7 @@ namespace MMR.Randomizer.Utils
         public static void WriteCodeUInt32(uint vram, uint value)
         {
             var offset = vram - CodeRAMStart;
-            var file = GetFile(FileIndex.code);
-            var span = new Span<byte>(file.Data);
+            var span = RomData.Files.GetSpan(FileIndex.code.ToInt());
             var slice = span.Slice((int)offset, 4);
             WriteUInt32(slice, value);
         }

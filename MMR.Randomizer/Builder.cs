@@ -135,10 +135,10 @@ namespace MMR.Randomizer
                 /// mute all music by setting their master volume to zero
                 // Traverse the audioseq index table to get the locations of all sequences
                 // the audioseq index table is not its own file, its buried within the code file, we need the offset to the table
-                var codeFile = RomData.MMFileList[RomUtils.GetFileIndexForWriting(Addresses.SeqTable)];
-                var audioseqIndexTable = codeFile.Data;
-                int audioseqIndexTableAddr = Addresses.SeqTable - codeFile.Addr;
-                var audioseq = RomData.MMFileList[RomUtils.GetFileIndexForWriting(Addresses.AudioSequence)].Data;
+                var codeFile = RomData.Files.GetCached(RomUtils.GetFileIndexForWriting(Addresses.SeqTable));
+                var audioseqIndexTable = codeFile.ToReadOnlySpan();
+                int audioseqIndexTableAddr = Addresses.SeqTable - (int)codeFile.AddressRange.Start;
+                var audioseq = RomData.Files.GetSpan(RomUtils.GetFileIndexForWriting(Addresses.AudioSequence));
                 // for each sequence, search for the master volume byte and change to zero
                 for (int seq = 2; seq < 128; seq += 1)
                 {
@@ -213,8 +213,7 @@ namespace MMR.Randomizer
                 if (playerModel == Character.Kafei)
                 {
                     var objectData = ObjUtils.GetObjectData(0x11);
-                    TunicUtils.UpdateKafeiTunic(ref objectData, t);
-                    ObjUtils.InsertObj(objectData, 0x11);
+                    TunicUtils.UpdateKafeiTunic(objectData, t);
                 }
                 else
                 {
@@ -224,7 +223,6 @@ namespace MMR.Randomizer
                     {
                         ReadWriteUtils.WriteFileAddr(locations[j], color, objectData);
                     }
-                    ObjUtils.InsertObj(objectData, 0x11);
                 };
             }
 
@@ -251,10 +249,10 @@ namespace MMR.Randomizer
 
         private void WriteInstruments(Random random)
         {
-            var codeFileAddress = 0xB3C000;
+            var codeSpan = RomData.Files.GetSpan(FileIndex.code.ToInt());
+            var audioSeqSpan = RomData.Files.GetSpan(FileIndex.Audioseq.ToInt());
 
             var milkBarActions = new List<Action>();
-            var audioSeqFileAddress = 0x46AF0;
             var milkBarSequenceOffset = 0x3AC90;
             var formOffsets = new Dictionary<TransformationForm, int>
             {
@@ -266,9 +264,11 @@ namespace MMR.Randomizer
             var stringOffset = 0x178;
             milkBarActions.Add(() =>
             {
+                var codeSpan = RomData.Files.GetSpan(FileIndex.code.ToInt());
+                var audioSeqSpan = RomData.Files.GetSpan(FileIndex.Audioseq.ToInt());
                 // Change instrument for sequence 0x54 (milk bar performance) to 0x00
-                ReadWriteUtils.WriteToROM(codeFileAddress + 0x13BB0A, 0x00);
-                ReadWriteUtils.WriteToROM(audioSeqFileAddress + milkBarSequenceOffset + stringOffset, Instrument.FemaleVoice.Id());
+                ReadWriteUtils.WriteU8(codeSpan, 0x13BB0A, 0x00);
+                ReadWriteUtils.WriteU8(audioSeqSpan, milkBarSequenceOffset + stringOffset, Instrument.FemaleVoice.Id());
             });
             var shouldPerformMilkBarActions = false;
 
@@ -290,7 +290,11 @@ namespace MMR.Randomizer
 
                 if (instrument == form.DefaultInstrument())
                 {
-                    milkBarActions.Add(() => ReadWriteUtils.WriteToROM(audioSeqFileAddress + milkBarSequenceOffset + formOffsets[form], instrument.Id()));
+                    milkBarActions.Add(() =>
+                    {
+                        var audioSeqSpan = RomData.Files.GetSpan(FileIndex.Audioseq.ToInt());
+                        ReadWriteUtils.WriteU8(audioSeqSpan, milkBarSequenceOffset + formOffsets[form], instrument.Id());
+                    });
                     previouslyUsedInstruments.Add(instrument);
                     continue;
                 }
@@ -304,13 +308,18 @@ namespace MMR.Randomizer
                         .Random(random);
                 }
 
-                milkBarActions.Add(() => ReadWriteUtils.WriteToROM(audioSeqFileAddress + milkBarSequenceOffset + formOffsets[form], instrument.Id()));
+                milkBarActions.Add(() =>
+                {
+                    var audioSeqSpan = RomData.Files.GetSpan(FileIndex.Audioseq.ToInt());
+                    ReadWriteUtils.WriteU8(audioSeqSpan, milkBarSequenceOffset + formOffsets[form], instrument.Id());
+                });
 
                 previouslyUsedInstruments.Add(instrument);
-                var freePlayInstrumentIndex = ReadWriteUtils.Read(codeFileAddress + freePlayInstrumentsOffset + index) - 1;
-                ReadWriteUtils.WriteToROM(freePlayInstrumentsArrayAddress + freePlayInstrumentIndex, instrument.Id());
+                var freePlayInstrumentIndex = ReadWriteUtils.ReadU8(codeSpan, freePlayInstrumentsOffset + index) - 1;
+                var freePlayInstrumentSpan = RomData.Files.GetSpan(FileIndex.Audioseq.ToInt(), (uint)freePlayInstrumentsArrayAddress);
+                ReadWriteUtils.WriteU8(freePlayInstrumentSpan, freePlayInstrumentIndex, instrument.Id());
 
-                ReadWriteUtils.WriteToROM(codeFileAddress + playbackInstrumentsOffset + index, instrument.Id());
+                ReadWriteUtils.WriteU8(codeSpan, playbackInstrumentsOffset + index, instrument.Id());
                 Debug.WriteLine($" form: {form} was assigned instrument: {instrument}");
             }
 
@@ -663,8 +672,10 @@ namespace MMR.Randomizer
 
         private Character DeterminePlayerModel()
         {
-            var data = ObjUtils.GetObjectData(0x11);
-            var hash = MD5.Create().ComputeHash(data);
+            var span = ObjUtils.GetObjectReadOnlySpan(0x11);
+            var hasher = IncrementalHash.CreateHash(HashAlgorithmName.MD5);
+            hasher.AppendData(span);
+            var hash = hasher.GetCurrentHash();
 
             if (hash.SequenceEqual(PlayerModelHash.LinkMM))
             {
@@ -751,15 +762,14 @@ namespace MMR.Randomizer
             byte nutCount = _randomized.Settings.NutandStickDrops == NutAndStickDrops.Light ? (byte) 0x1 : (byte)bushCount;
             byte stickCount = (byte)Math.Max((int)_randomized.Settings.NutandStickDrops - 2, 1);
             int  droptableFileID = RomUtils.GetFileIndexForWriting(0xC444B8);
-            RomUtils.CheckCompressed(droptableFileID);
 
             void AddDropToDropTable(byte dropType, int replacementSlot = 0xC444B8, byte amount = 0)
-            {                
+            {
                 // each replacementSlot is a single 1/16 slot for random item drop
-                int offset = replacementSlot - RomData.MMFileList[droptableFileID].Addr;
-                RomData.MMFileList[droptableFileID].Data[offset] = dropType;
+                var span = RomData.Files.GetSpan(droptableFileID, (uint)replacementSlot);
+                span[0] = dropType;
                 // how many items are dropped is the table that follows, aligns exactly with 0x110
-                RomData.MMFileList[droptableFileID].Data[offset + 0x110] = amount;
+                span[0x110] = amount;
             }
 
             // termina field bushes 1/16 drop table entry
@@ -1199,9 +1209,9 @@ namespace MMR.Randomizer
 
         private void WriteHideClock()
         {
-            var codeFileAddress = 0xB3C000;
             var offset = 0x73B7C; // branch for UI is time hasn't changed
-            ReadWriteUtils.WriteToROM(codeFileAddress + offset, 0x10); // change to always branch
+            var code = RomData.Files.GetSpan(FileIndex.code.ToInt());
+            ReadWriteUtils.WriteU8(code, offset, 0x10); // change to always branch
         }
 
         /// <summary>
@@ -1243,10 +1253,10 @@ namespace MMR.Randomizer
 
             ResourceUtils.ApplyHack(Resources.mods.fix_clock_speed);
 
-            var codeFileAddress = 0xB3C000;
+            var code = RomData.Files.GetSpan(FileIndex.code.ToInt());
             var hackAddressOffset = 0x8A674;
             var modificationOffset = 0x1B;
-            ReadWriteUtils.WriteToROM(codeFileAddress + hackAddressOffset + modificationOffset, speed);
+            ReadWriteUtils.WriteU8(code, hackAddressOffset + modificationOffset, speed);
 
             var invertedModifierOffsets = new List<int>
             {
@@ -1255,7 +1265,7 @@ namespace MMR.Randomizer
             };
             foreach (var offset in invertedModifierOffsets)
             {
-                ReadWriteUtils.WriteToROM(codeFileAddress + offset, (ushort)invertedModifier);
+                ReadWriteUtils.WriteU16(code, offset, (ushort)invertedModifier);
             }
         }
 
@@ -1264,9 +1274,9 @@ namespace MMR.Randomizer
         /// </summary>
         private void WriteFreeHints()
         {
-            int address = 0x00E0A810 + 0x378;
+            var span = RomData.Files.GetSpan(FileIndex.En_Gs.ToInt());
             uint val = 0x00;
-            ReadWriteUtils.WriteToROM(address, val);
+            ReadWriteUtils.WriteU32(span, 0x378, val);
         }
 
         private void WriteSoundEffects(Random random)
@@ -1426,12 +1436,15 @@ namespace MMR.Randomizer
 
             foreach (var kvp in startingItems)
             {
-                ReadWriteUtils.WriteToROM(kvp.Key, kvp.Value);
+                var (address, value) = kvp;
+                var span = RomData.Files.GetSpanAt((uint)address);
+                ReadWriteUtils.WriteU8(span, value);
             }
 
             if (itemList.Count(item => item.Name() == "Heart Container") == 1)
             {
-                ReadWriteUtils.WriteToROM(0x00B97E8F, 0x0C); // reduce low health beep threshold
+                var span = RomData.Files.GetSpan(FileIndex.code.ToInt(), 0x00B97E8F);
+                ReadWriteUtils.WriteU8(span, 0x0C); // reduce low health beep threshold
             }
         }
 
@@ -3042,29 +3055,29 @@ namespace MMR.Randomizer
 
             // we need to set 0x80082C1C to 0x1000000C which bypasses
             //   the conditional branches detecting if you haven't hit the right buttons, leaving function
-            var bootFile = RomData.MMFileList[1].Data;
+            var bootFile = RomData.Files.GetSpan(1);
             ReadWriteUtils.Arr_WriteU32(bootFile, 0x2BBC, 0x1000000C);
 
-            void SwapBytes(int start, int end, byte searchByte, byte replaceByte)
+            static void SwapBytes(Span<byte> data, int start, int end, byte searchByte, byte replaceByte)
             {
                 for (int i = start; i < end; ++i)
                 {
-                    if (bootFile[i] == searchByte)
+                    if (data[i] == searchByte)
                     {
-                        bootFile[i]  = replaceByte;
+                        data[i]  = replaceByte;
                     }
                 }
             }
 
             // the H after each hex value for registers (H for base 16 'hex' ?) is hard for me to read
             // starts RAM 80098648, on rom it starts on 0x19640, within boot file its 0x185E0
-            SwapBytes(0x185E0, 0x18720, (byte) 'H', (byte) ' '); // general registers
-            SwapBytes(0x18760, 0x188D0, (byte) 'H', (byte) ' '); // floating point registers
+            SwapBytes(bootFile, 0x185E0, 0x18720, (byte) 'H', (byte) ' '); // general registers
+            SwapBytes(bootFile, 0x18760, 0x188D0, (byte) 'H', (byte) ' '); // floating point registers
 
             // convert lower case hex values to upper case (eg 8000abcd to 8000ABCD)
             // they used c printf string substitution, so just change %x to %X (8 byte wide though, "%08x")
-            SwapBytes(0x181E0, 0x18230, (byte) 'x', (byte) 'X'); // dma section
-            SwapBytes(0x18470, 0x18B04, (byte) 'x', (byte) 'X'); // the rest of hex values for the whole debug crasher
+            SwapBytes(bootFile, 0x181E0, 0x18230, (byte) 'x', (byte) 'X'); // dma section
+            SwapBytes(bootFile, 0x18470, 0x18B04, (byte) 'x', (byte) 'X'); // the rest of hex values for the whole debug crasher
 
             // show V-PC for overlays to help find vram address in actors, useful
             // yes I know it shows this page _later_, but a lot of users will only wait for the first one,
@@ -3116,10 +3129,9 @@ namespace MMR.Randomizer
             {
                 // Add extended objects file and write addresses to table in ROM
                 var extended = _extendedObjects;
-                var fileIndex = RomUtils.AppendFile(extended.Bundle.GetFull());
-                var file = RomData.MMFileList[fileIndex];
-                var baseAddr = (uint)file.Addr;
-                asm.Symbols.WriteExtendedObjects(extended.GetAddresses(baseAddr));
+                var file = RomData.Files.Append(extended.Bundle.GetFull());
+                var baseAddr = file.AddressRange.Start;
+                asm.WriteExtendedObjects(extended.GetAddresses(baseAddr));
             }
 
             // Add extra messages to message table.
@@ -3264,24 +3276,26 @@ namespace MMR.Randomizer
             _extraMessages.Add(entry);
         }
 
+        /// <summary>
+        /// Whether or not to use seed number instead of patch hash for cosmetic randomization.
+        /// </summary>
+        const bool ShouldUseSeedForCosmetics = false;
+
         public void MakeROM(OutputSettings outputSettings, IProgressReporter progressReporter)
         {
-            using (BinaryReader OldROM = new BinaryReader(File.OpenRead(outputSettings.InputROMFilename)))
-            {
-                RomUtils.ReadFileTable(OldROM);
-            }
-
-            var originalMMFileList = RomData.MMFileList.Select(file => file.Clone()).ToList();
+            RomUtils.ReadFileTable(outputSettings.InputROMFilename);
 
             byte[] hash;
-            AsmContext asm;
+            var asm = AsmContext.LoadInternal();
             if (!string.IsNullOrWhiteSpace(outputSettings.InputPatchFilename))
             {
                 progressReporter.ReportProgress(50, "Applying patch...");
-                hash = Patch.Patcher.ApplyPatch(outputSettings.InputPatchFilename);
+                hash = Patcher.Apply(outputSettings.InputPatchFilename);
 
-                // Parse Symbols data from the ROM (specific MMFile)
-                asm = AsmContext.LoadFromROM();
+                if (ShouldUseSeedForCosmetics)
+                {
+                    throw new NotSupportedException();
+                }
 
                 // Apply Asm configuration post-patch
                 WriteAsmConfigPostPatch(asm, hash);
@@ -3365,7 +3379,6 @@ namespace MMR.Randomizer
                 }
 
                 // Load Asm data from internal resource files and apply
-                asm = AsmContext.LoadInternal();
                 progressReporter.ReportProgress(71, "Writing ASM patch...");
                 WriteAsmPatch(asm);
 
@@ -3375,17 +3388,24 @@ namespace MMR.Randomizer
                 hash = outputSettings.GeneratePatch switch
                 {
                     // Write patch file to path and return hash.
-                    true => Patch.Patcher.CreatePatch(Path.ChangeExtension(outputSettings.OutputROMFilename, "mmr"), originalMMFileList),
+                    true => Patcher.Create(Path.ChangeExtension(outputSettings.OutputROMFilename, "mmr")),
                     // Only return hash.
-                    false => Patch.Patcher.CreatePatch(originalMMFileList),
+                    false => Patcher.Create(),
                 };
+
+                if (ShouldUseSeedForCosmetics)
+                {
+                    var seedBytes = new byte[4];
+                    ReadWriteUtils.WriteS32(seedBytes, _randomized.Seed);
+                    hash = SHA256.HashData(seedBytes);
+                }
 
                 // Write subset of Asm config post-patch
                 WriteAsmConfig(asm, hash);
 
                 if (_randomized.Settings.DrawHash || outputSettings.GeneratePatch)
                 {
-                    var iconStripIcons = asm.Symbols.ReadHashIconsTable();
+                    var iconStripIcons = asm.ReadHashIconsTable();
                     OutputHashIcons(ImageUtils.GetIconIndices(hash).Select(index => iconStripIcons[index]), Path.ChangeExtension(outputSettings.OutputROMFilename, "png"));
                 }
             }
@@ -3397,7 +3417,7 @@ namespace MMR.Randomizer
             WriteInstruments(new Random(BitConverter.ToInt32(hash, 0)));
 
             progressReporter.ReportProgress(73, "Writing music...");
-            SequenceUtils.MoveAudioBankTableToFile();
+            SequenceUtils.MoveAudioBankTableToFile(asm.Symbols);
             WriteAudioSeq(new Random(BitConverter.ToInt32(hash, 0)), outputSettings);
             WriteMuteMusic();
             WriteEnemyCombatMusicMute();
@@ -3410,21 +3430,21 @@ namespace MMR.Randomizer
             {
                 progressReporter.ReportProgress(75, "Building ROM...");
 
-                byte[] ROM = RomUtils.BuildROM();
+                var ROM = RomUtils.BuildROM();
 
                 if (outputSettings.GenerateROM)
                 {
-                    if (ROM.Length > 0x4000000) // over 64mb
+                    if (ROM.Buffer.Length > 0x4000000) // over 64mb
                     {
                         throw new ROMOverflowException("64 MB", "hardware (Everdrive)");
                     }
                     progressReporter.ReportProgress(85, "Writing ROM...");
-                    RomUtils.WriteROM(outputSettings.OutputROMFilename, ROM);
+                    RomUtils.WriteROM(outputSettings.OutputROMFilename, ROM.Buffer.Span);
                 }
 
                 if (outputSettings.OutputVC)
                 {
-                    if (ROM.Length > 0x2000000) // over 32mb
+                    if (ROM.Buffer.Length > 0x2000000) // over 32mb
                     {
                         throw new ROMOverflowException("32 MB", "WiiVC");
                     }
@@ -3434,7 +3454,7 @@ namespace MMR.Randomizer
                     {
                         fileName = Path.Combine(Values.MainDirectory, fileName);
                     }
-                    VCInjectionUtils.BuildVC(ROM, _cosmeticSettings.AsmOptions.DPadConfig, Values.VCDirectory, fileName);
+                    VCInjectionUtils.BuildVC(ROM.Buffer.Span, _cosmeticSettings.AsmOptions.DPadConfig, Values.VCDirectory, fileName);
                 }
             }
             progressReporter.ReportProgress(100, "Done!");

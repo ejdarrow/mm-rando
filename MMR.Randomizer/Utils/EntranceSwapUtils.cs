@@ -1,5 +1,6 @@
 ﻿using MMR.Randomizer.Extensions;
 using MMR.Randomizer.GameObjects;
+using MMR.Randomizer.Models.Rom;
 using System.Collections.Generic;
 
 namespace MMR.Randomizer.Utils
@@ -39,16 +40,17 @@ namespace MMR.Randomizer.Utils
             }
             foreach (var address in exit.ExitAddresses())
             {
-                ReadWriteUtils.WriteToROM(address, spawnId);
+                var span = RomData.Files.GetSpanAt((uint)address);
+                ReadWriteUtils.WriteU16(span, spawnId);
             }
         }
 
         internal static void WriteSpawnToROM(DungeonEntrance newSpawn)
         {
             var spawnAddress = newSpawn.SpawnId();
-            ReadWriteUtils.WriteToROM(0xBDB882, spawnAddress);
-            ReadWriteUtils.WriteToROM(0x02E90FD4, spawnAddress);
-            ReadWriteUtils.WriteToROM(0x02E90FDC, spawnAddress);
+            ReadWriteUtils.WriteU16(RomData.Files.GetSpan(FileIndex.code.ToInt(), 0xBDB882), spawnAddress);
+            ReadWriteUtils.WriteU16(RomData.Files.GetSpan(FileIndex.SPOT00.ToInt(), 0x02E90FD4), spawnAddress);
+            ReadWriteUtils.WriteU16(RomData.Files.GetSpan(FileIndex.SPOT00.ToInt(), 0x02E90FDC), spawnAddress);
         }
     }
 }

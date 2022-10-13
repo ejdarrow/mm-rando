@@ -74,18 +74,18 @@ namespace MMR.Randomizer.Models.Rom
         /// Read an existing <see cref="MessageEntry"/> from a <see cref="byte"/> array subset.
         /// </summary>
         /// <param name="id">Message Id</param>
-        /// <param name="buf">Byte array</param>
+        /// <param name="span">Byte array</param>
         /// <param name="offset">Offset into buffer to begin reading</param>
         /// <param name="size">Size of the message entry</param>
         /// <returns><see cref="MessageEntry"/> from bytes.</returns>
-        public static MessageEntry FromBytes(ushort id, byte[] buf, int offset, int size)
+        public static MessageEntry FromBytes(ushort id, ReadOnlySpan<byte> span, int offset, int size)
         {
             // Copy initial 11 bytes of header.
             var header = new byte[11];
-            Buffer.BlockCopy(buf, offset, header, 0, header.Length);
+            span.Slice(offset, 11).CopyTo(header);
 
             var messageBuffer = new byte[size];
-            Buffer.BlockCopy(buf, offset + 11, messageBuffer, 0, messageBuffer.Length);
+            span.Slice(offset + 11, messageBuffer.Length).CopyTo(messageBuffer);
 
             // Remove end padding
             for (var i = size; i > 0; i--)

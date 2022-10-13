@@ -1,4 +1,4 @@
-using MMR.Randomizer.Models.Rom;
+using MMR.Rom;
 using NUnit.Framework;
 using System.Linq;
 
@@ -26,7 +26,7 @@ namespace MMR.Yaz.Tests
 
         static void PerformCompression(RomFile rom, VirtualFile entry)
         {
-            var slice = rom.Slice(entry);
+            var slice = rom.GetSpan(entry);
             var decoded = Yaz.Decode(slice);
             var encoded = Yaz.EncodeWithHeader(decoded, slice); // Yaz.EncodeAndCopy(decoded);
             var aligned = Yaz.AlignTo16(encoded);

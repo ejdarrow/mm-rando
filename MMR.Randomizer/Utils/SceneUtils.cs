@@ -1,4 +1,5 @@
 ﻿using MMR.Randomizer.Models.Rom;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using MMR.Randomizer.Extensions;
@@ -38,28 +39,26 @@ namespace MMR.Randomizer.Utils
             }
 
             int bit = 1 << (num & 7);
-            int f = RomUtils.GetFileIndexForWriting(SCENE_FLAG_MASKS);
-            int addr = SCENE_FLAG_MASKS - RomData.MMFileList[f].Addr + offset;
-            RomData.MMFileList[f].Data[addr] |= (byte)bit;
+            var span = RomData.Files.GetSpan(FileIndex.code.ToInt(), SCENE_FLAG_MASKS);
+            span[offset] |= (byte)bit;
         }
 
         public static void ReadSceneTable()
         {
+            var span = RomData.Files.GetReadOnlySpan(FileIndex.code.ToInt(), SCENE_TABLE);
             RomData.SceneList = new List<Scene>();
-            int f = RomUtils.GetFileIndexForWriting(SCENE_TABLE);
-            int _SceneTable = SCENE_TABLE - RomData.MMFileList[f].Addr;
             int i = 0;
             while (true)
             {
                 Scene s = new Scene();
-                uint saddr = ReadWriteUtils.Arr_ReadU32(RomData.MMFileList[f].Data, _SceneTable + i);
+                uint saddr = ReadWriteUtils.Arr_ReadU32(span, i);
                 if (saddr > 0x4000000)
                 {
                     break;
                 }
                 if (saddr != 0)
                 {
-                    s.File = RomUtils.AddrToFile((int)saddr);
+                    s.File = RomData.Files.ResolveIndex(saddr);
                     s.Number = i >> 4;
                     RomData.SceneList.Add(s);
                 }
@@ -72,19 +71,19 @@ namespace MMR.Randomizer.Utils
             foreach (var scene in RomData.SceneList)
             {
                 int f = scene.File;
-                RomUtils.CheckCompressed(f);
+                var span = RomData.Files.GetReadOnlySpan(f);
                 int j = 0;
                 while (true)
                 {
-                    byte cmd = RomData.MMFileList[f].Data[j];
+                    byte cmd = span[j];
                     if (cmd == 0x04)
                     {
-                        byte mapcount = RomData.MMFileList[f].Data[j + 1];
-                        int mapsaddr = (int)ReadWriteUtils.Arr_ReadU32(RomData.MMFileList[f].Data, j + 4) & 0xFFFFFF;
+                        byte mapcount = span[j + 1];
+                        int mapsaddr = ReadWriteUtils.Arr_ReadS32(span, j + 4) & 0xFFFFFF;
                         for (int k = 0; k < mapcount; k++)
                         {
                             Map m = new Map();
-                            m.File = RomUtils.AddrToFile((int)ReadWriteUtils.Arr_ReadU32(RomData.MMFileList[f].Data, mapsaddr));
+                            m.File = RomUtils.AddrToFile(ReadWriteUtils.Arr_ReadS32(span, mapsaddr));
                             scene.Maps.Add(m);
                             mapsaddr += 8;
                         }
@@ -112,16 +111,16 @@ namespace MMR.Randomizer.Utils
                 for (int j = 0; j < maps; j++)
                 {
                     int f = RomData.SceneList[i].Maps[j].File;
-                    RomUtils.CheckCompressed(f);
+                    var span = RomData.Files.GetReadOnlySpan(f);
                     int k = 0;
                     int setupsaddr = -1;
                     int nextlowest = -1;
                     while (true)
                     {
-                        byte cmd = RomData.MMFileList[f].Data[k];
+                        byte cmd = span[k];
                         if (cmd == 0x18)
                         {
-                            setupsaddr = (int)ReadWriteUtils.Arr_ReadU32(RomData.MMFileList[f].Data, k + 4) & 0xFFFFFF;
+                            setupsaddr = ReadWriteUtils.Arr_ReadS32(span, k + 4) & 0xFFFFFF;
                         }
                         else if (cmd == 0x14)
                         {
@@ -129,9 +128,9 @@ namespace MMR.Randomizer.Utils
                         }
                         else
                         {
-                            if (RomData.MMFileList[f].Data[k + 4] == 0x03)
+                            if (span[k + 4] == 0x03)
                             {
-                                int p = (int)ReadWriteUtils.Arr_ReadU32(RomData.MMFileList[f].Data, k + 4) & 0xFFFFFF;
+                                int p = ReadWriteUtils.Arr_ReadS32(span, k + 4) & 0xFFFFFF;
                                 if (((p < nextlowest) || (nextlowest == -1)) && ((p > setupsaddr) && (setupsaddr != -1)))
                                 {
                                     nextlowest = p;
@@ -146,12 +145,12 @@ namespace MMR.Randomizer.Utils
                     }
                     for (k = setupsaddr; k < nextlowest; k += 4)
                     {
-                        byte s = RomData.MMFileList[f].Data[k];
+                        byte s = span[k];
                         if (s != 0x03)
                         {
                             break;
                         }
-                        int p = (int)ReadWriteUtils.Arr_ReadU32(RomData.MMFileList[f].Data, k) & 0xFFFFFF;
+                        int p = ReadWriteUtils.Arr_ReadS32(span, k) & 0xFFFFFF;
                         Map m = new Map();
                         m.File = f;
                         m.Header = p;
@@ -161,7 +160,7 @@ namespace MMR.Randomizer.Utils
             }
         }
 
-        private static List<Actor> ReadMapActors(byte[] Map, int Addr, int Count)
+        private static List<Actor> ReadMapActors(ReadOnlySpan<byte> Map, int Addr, int Count)
         {
             List<Actor> Actors = new List<Actor>();
             for (int i = 0; i < Count; i++)
@@ -182,7 +181,7 @@ namespace MMR.Randomizer.Utils
             return Actors;
         }
 
-        private static List<int> ReadMapObjects(byte[] Map, int Addr, int Count)
+        private static List<int> ReadMapObjects(ReadOnlySpan<byte> Map, int Addr, int Count)
         {
             List<int> Objects = new List<int>();
             for (int i = 0; i < Count; i++)
@@ -192,7 +191,7 @@ namespace MMR.Randomizer.Utils
             return Objects;
         }
 
-        private static void WriteMapActors(byte[] Map, int Addr, List<Actor> Actors)
+        private static void WriteMapActors(Span<byte> Map, int Addr, List<Actor> Actors)
         {
             for (int i = 0; i < Actors.Count; i++)
             {
@@ -207,7 +206,7 @@ namespace MMR.Randomizer.Utils
             }
         }
 
-        private static void WriteMapObjects(byte[] Map, int Addr, List<int> Objects)
+        private static void WriteMapObjects(Span<byte> Map, int Addr, List<int> Objects)
         {
             for (int i = 0; i < Objects.Count; i++)
             {
@@ -217,8 +216,9 @@ namespace MMR.Randomizer.Utils
 
         private static void UpdateMap(Map M)
         {
-            WriteMapActors(RomData.MMFileList[M.File].Data, M.ActorAddr, M.Actors);
-            WriteMapObjects(RomData.MMFileList[M.File].Data, M.ObjAddr, M.Objects);
+            var span = RomData.Files.GetSpan(M.File);
+            WriteMapActors(span, M.ActorAddr, M.Actors);
+            WriteMapObjects(span, M.ObjAddr, M.Objects);
         }
 
         public static void UpdateScene(Scene scene)
@@ -236,24 +236,24 @@ namespace MMR.Randomizer.Utils
                 for (int j = 0; j < RomData.SceneList[i].Maps.Count; j++)
                 {
                     int f = RomData.SceneList[i].Maps[j].File;
-                    RomUtils.CheckCompressed(f);
                     int k = RomData.SceneList[i].Maps[j].Header;
+                    var span = RomData.Files.GetReadOnlySpan(f);
                     while (true)
                     {
-                        byte cmd = RomData.MMFileList[f].Data[k];
+                        byte cmd = span[k];
                         if (cmd == 0x01)
                         {
-                            byte ActorCount = RomData.MMFileList[f].Data[k + 1];
-                            int ActorAddr = (int)ReadWriteUtils.Arr_ReadU32(RomData.MMFileList[f].Data, k + 4) & 0xFFFFFF;
+                            byte ActorCount = span[k + 1];
+                            int ActorAddr = ReadWriteUtils.Arr_ReadS32(span, k + 4) & 0xFFFFFF;
                             RomData.SceneList[i].Maps[j].ActorAddr = ActorAddr;
-                            RomData.SceneList[i].Maps[j].Actors = ReadMapActors(RomData.MMFileList[f].Data, ActorAddr, ActorCount);
+                            RomData.SceneList[i].Maps[j].Actors = ReadMapActors(span, ActorAddr, ActorCount);
                         }
                         if (cmd == 0x0B)
                         {
-                            byte ObjectCount = RomData.MMFileList[f].Data[k + 1];
-                            int ObjectAddr = (int)ReadWriteUtils.Arr_ReadU32(RomData.MMFileList[f].Data, k + 4) & 0xFFFFFF;
+                            byte ObjectCount = span[k + 1];
+                            int ObjectAddr = ReadWriteUtils.Arr_ReadS32(span, k + 4) & 0xFFFFFF;
                             RomData.SceneList[i].Maps[j].ObjAddr = ObjectAddr;
-                            RomData.SceneList[i].Maps[j].Objects = ReadMapObjects(RomData.MMFileList[f].Data, ObjectAddr, ObjectCount);
+                            RomData.SceneList[i].Maps[j].Objects = ReadMapObjects(span, ObjectAddr, ObjectCount);
                         }
                         if (cmd == 0x14)
                         {
@@ -267,6 +267,7 @@ namespace MMR.Randomizer.Utils
 
         private static void CheckHeaderForExits(int f, int headeraddr, Scene scene)
         {
+            var span = RomData.Files.GetReadOnlySpan(f);
             int j = headeraddr;
             int setupsaddr = -1;
             int nextlowest = -1;
@@ -275,18 +276,18 @@ namespace MMR.Randomizer.Utils
             scene.Setups.Add(setup);
             while (true)
             {
-                byte cmd = RomData.MMFileList[f].Data[j];
+                byte cmd = span[j];
                 if (cmd == 0x13)
                 {
-                    setup.ExitListAddress = (int)ReadWriteUtils.Arr_ReadU32(RomData.MMFileList[f].Data, j + 4) & 0xFFFFFF;
+                    setup.ExitListAddress = ReadWriteUtils.Arr_ReadS32(span, j + 4) & 0xFFFFFF;
                 }
                 else if (cmd == 0x17)
                 {
-                    setup.CutsceneListAddress = (int)ReadWriteUtils.Arr_ReadU32(RomData.MMFileList[f].Data, j + 4) & 0xFFFFFF;
+                    setup.CutsceneListAddress = ReadWriteUtils.Arr_ReadS32(span, j + 4) & 0xFFFFFF;
                 }
                 else if (cmd == 0x18)
                 {
-                    setupsaddr = (int)ReadWriteUtils.Arr_ReadU32(RomData.MMFileList[f].Data, j + 4) & 0xFFFFFF;
+                    setupsaddr = ReadWriteUtils.Arr_ReadS32(span, j + 4) & 0xFFFFFF;
                 }
                 else if (cmd == 0x14)
                 {
@@ -294,9 +295,9 @@ namespace MMR.Randomizer.Utils
                 }
                 else
                 {
-                    if (RomData.MMFileList[f].Data[j + 4] == 0x02)
+                    if (span[j + 4] == 0x02)
                     {
-                        int p = (int)ReadWriteUtils.Arr_ReadU32(RomData.MMFileList[f].Data, j + 4) & 0xFFFFFF;
+                        int p = ReadWriteUtils.Arr_ReadS32(span, j + 4) & 0xFFFFFF;
                         if (((p < nextlowest) || (nextlowest == -1)) && ((p > setupsaddr) && (setupsaddr != -1)))
                         {
                             nextlowest = p;
@@ -308,13 +309,13 @@ namespace MMR.Randomizer.Utils
             if ((setupsaddr != -1) && nextlowest != -1)
             {
                 j = setupsaddr;
-                s = RomData.MMFileList[f].Data[j];
+                s = span[j];
                 while (s == 0x02)
                 {
-                    int p = (int)ReadWriteUtils.Arr_ReadU32(RomData.MMFileList[f].Data, j) & 0xFFFFFF;
+                    int p = ReadWriteUtils.Arr_ReadS32(span, j) & 0xFFFFFF;
                     CheckHeaderForExits(f, p, scene);
                     j += 4;
-                    s = RomData.MMFileList[f].Data[j];
+                    s = span[j];
                 }
             }
         }
@@ -322,12 +323,12 @@ namespace MMR.Randomizer.Utils
         public static void ReenableNightBGMSingle(int SceneFileID, byte NewMusicByte = 0x13)
         {
             // search for the bgm music header in the scene headers and replace the night sfx with a value that plays day BGM
-            RomUtils.CheckCompressed(SceneFileID);
+            var span = RomData.Files.GetSpan(SceneFileID);
             for (int Byte = 0; Byte < 0x10 * 70; Byte += 8)
             {
-                if (RomData.MMFileList[SceneFileID].Data[Byte] == 0x15) // header command starts with 0x15
+                if (span[Byte] == 0x15) // header command starts with 0x15
                 {
-                    RomData.MMFileList[SceneFileID].Data[Byte + 0x6] = NewMusicByte; // 6th/8 byte is night BGM behavior, 0x13 is daytime BGM
+                    span[Byte + 0x6] = NewMusicByte; // 6th/8 byte is night BGM behavior, 0x13 is daytime BGM
                     return;
                 }
             }
@@ -383,9 +384,8 @@ namespace MMR.Randomizer.Utils
             // Kamaro the dancing ghost in Termina Field breaks night music
             //   he calls a function that sets an unknown actor flag unk39 & 20, he calls this function per frame from multiple places
             // if we nop it his music never plays, and might music is never interupted by him
-            var kamaroFID = 593;
-            RomUtils.CheckCompressed(kamaroFID);
-            var kamaroData = RomData.MMFileList[kamaroFID].Data;
+            const int kamaroFID = 593;
+            var kamaroData = RomData.Files.GetSpan(kamaroFID);
             // null function call to func_800B9084 -> NOP
             ReadWriteUtils.Arr_WriteU32(kamaroData, 0x618, 0x00000000);
 
@@ -393,9 +393,8 @@ namespace MMR.Randomizer.Utils
             //   on first night, after he's supposed to have stolen the bag
             //   his actor will spawn, check the time, and self-destroy, and take out BGM with it
             // if we nop that kill music command it will stop him from stopping BGM
-            var sakonFID = 526;
-            RomUtils.CheckCompressed(sakonFID);
-            var sakonData = RomData.MMFileList[sakonFID].Data;
+            const int sakonFID = 526;
+            var sakonData = RomData.Files.GetSpan(sakonFID);
             // null function call to Audio_QueueSeqCmd -> NOP
             ReadWriteUtils.Arr_WriteU32(sakonData, 0x3A0C, 0x00000000);
         }
