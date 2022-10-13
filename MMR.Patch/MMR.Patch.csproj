@@ -6,7 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Be.IO-multi" Version="1.0.0" />
     <PackageReference Include="VCDiff" Version="3.2.7" />
   </ItemGroup>
 

@@ -1,7 +1,7 @@
-﻿using Be.IO;
-using MMR.Common.Extensions;
+﻿using MMR.Common.Extensions;
 using MMR.Rom;
 using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.IO.Compression;
 using System.Security.Cryptography;
@@ -97,10 +97,13 @@ namespace MMR.Patch
                     // Fully decompress into MemoryStream so that we can access Position to check for end of Stream.
                     decompressStream.CopyTo(memoryStream);
                     memoryStream.Seek(0, SeekOrigin.Begin);
-                    using var reader = new BeBinaryReader(memoryStream);
+                    using var reader = new BinaryReader(memoryStream);
+
+                    Span<byte> magicBytes = stackalloc byte[sizeof(uint)];
+                    reader.ReadExact(magicBytes);
 
                     // Validate patch magic.
-                    var magic = reader.ReadUInt32();
+                    var magic = BinaryPrimitives.ReadUInt32BigEndian(magicBytes);
                     ValidateMagic(magic);
 
                     Span<byte> headerBytes = stackalloc byte[PatchHeader.Size];
@@ -169,10 +172,13 @@ namespace MMR.Patch
             var hashAlg = new SHA256Managed();
             using (var hashStream = new CryptoStream(outStream, hashAlg, CryptoStreamMode.Write))
             using (var compressStream = new GZipStream(hashStream, CompressionMode.Compress))
-            using (var writer = new BeBinaryWriter(compressStream))
+            using (var writer = new BinaryWriter(compressStream))
             {
+                Span<byte> magicBytes = stackalloc byte[sizeof(uint)];
+                BinaryPrimitives.WriteUInt32BigEndian(magicBytes, PatchMagic);
+
                 // Write magic value.
-                writer.WriteUInt32(PatchMagic);
+                writer.Write(magicBytes);
 
                 Span<byte> headerBytes = stackalloc byte[PatchHeader.Size];
                 for (var fileIndex = 0; fileIndex < fileTable.Length; fileIndex++)
