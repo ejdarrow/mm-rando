@@ -1,5 +1,5 @@
 import { createItemListSlice, ItemListStore } from "./createItemListSlice"
-import { RootState } from "../store"
+import { RootState } from "./store"
 
 const itemPoolListSlice = createItemListSlice('itemPool')
 

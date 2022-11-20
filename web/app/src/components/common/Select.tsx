@@ -1,5 +1,5 @@
 import { PropsWithChildren } from 'react'
-import styles from './Select.module.css'
+import styles from './styles/Select.module.css'
 
 interface SelectProps {
   id?: string

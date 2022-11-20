@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { api } from './common/Api'
-import { ItemListRepr } from './common/ConfigTypes'
-import { UserInterfaceJson } from './common/JsonTypes'
-import itemPoolListSlice from './store/itemPoolListSlice'
-import junkLocationsListSlice from './store/junkLocationsListSlice'
+import { api } from '../../common/Api'
+import { ItemListRepr } from '../../common/ConfigTypes'
+import { UserInterfaceJson } from '../../common/JsonTypes'
+import itemPoolListSlice from '../../store/itemPoolListSlice'
+import junkLocationsListSlice from '../../store/junkLocationsListSlice'
 
 const ItemListReprContext = React.createContext<ItemListRepr | undefined>(undefined)
 

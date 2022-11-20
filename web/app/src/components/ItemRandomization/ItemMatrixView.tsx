@@ -1,11 +1,11 @@
 import React, { useRef } from 'react'
-import { Checkbox } from './Checkbox'
+import { Checkbox } from '../common/Checkbox'
 import { useItemListRepr } from './Randomizer'
-import { setItemPoolColumnCount } from './RootStyle'
-import { ItemListBitMask } from './common/ItemList'
-import { useAppDispatch, useAppSelector } from './hooks'
-import { ItemListStore } from './store/createItemListSlice'
-import styles from './ItemMatrixView.module.css'
+import { rootStyle } from '../../common/RootStyle'
+import { ItemListBitMask } from '../../common/ItemList'
+import { useAppDispatch, useAppSelector } from '../../common/hooks'
+import { ItemListStore } from '../../store/createItemListSlice'
+import styles from './styles/ItemMatrixView.module.css'
 
 const dataColumnAtt = 'data-column'
 const dataRowAtt = 'data-row'
@@ -15,6 +15,10 @@ const dataHoveredRowAtt = 'data-hovered-row'
 interface ItemListCounterProps {
   store: ItemListStore
 }
+
+const setItemPoolColumnCount = (count: number) => {
+  rootStyle().setProperty('--app-itempool-column-count', count.toString());
+};
 
 const ItemListCounter = (props: ItemListCounterProps) => {
   const enabledCount = useAppSelector(state => props.store.selector(state).getEnabledCount())
@@ -211,6 +215,7 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
       </div>
     </>
   )
+  
 }
 
 export default ItemMatrixView

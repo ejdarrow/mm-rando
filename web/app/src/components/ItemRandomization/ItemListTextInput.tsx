@@ -1,5 +1,5 @@
-import { useAppSelector } from './hooks'
-import type { RootState } from './store'
+import { useAppSelector } from '../../common/hooks'
+import type { RootState } from '../../store/store'
 
 interface ItemListTextInputProps {
   selector: (state: RootState) => string
