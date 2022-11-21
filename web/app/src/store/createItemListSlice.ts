@@ -8,11 +8,6 @@ import {
   reduxApi,
 } from '../common/ItemList'
 
-// const transform = <T,>(state: ItemListObject, callback: (list: ItemListBits) => T) => {
-//   const x = ItemListBits.fromObject(state)
-//   return callback(x)
-// }
-
 export const createItemListSlice = (id: string) => createSlice({
   name: `${id}-itemList`,
   initialState: {
