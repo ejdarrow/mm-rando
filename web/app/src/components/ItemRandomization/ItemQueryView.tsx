@@ -6,7 +6,7 @@ import { CheckedState } from '../../common/CheckedState'
 import { ItemRepr } from '../../common/ConfigTypes'
 import { CategoryGroup, CategoryType, ItemGroup } from '../../common/ItemCategory'
 import { useAppDispatch, useAppSelector } from '../../common/hooks'
-import { ItemListStore } from '../../store/createItemListSlice'
+import { asItemList, ItemListStore } from '../../store/createItemListSlice'
 
 interface CardProps {
   itemRepr: ItemRepr
@@ -15,7 +15,7 @@ interface CardProps {
 
 const Card = (props: CardProps) => {
   const index = props.itemRepr.index
-  const selected = useAppSelector(state => props.store.selector(state).hasBit(index))
+  const selected = useAppSelector(state => asItemList(props.store.selector(state)).hasBit(index))
   const checkedState = CheckedState.fromBoolean(selected)
   const dispatch = useAppDispatch()
 
@@ -59,15 +59,15 @@ interface ItemQueryCategoryProps {
 
 const ItemQueryCategory = (props: ItemQueryCategoryProps) => {
   const bitMask = props.itemGroup.bitMask
-  const checkedState = useAppSelector(state => props.store.selector(state).getCheckedState(bitMask))
+  const checkedState = useAppSelector(state => asItemList(props.store.selector(state)).getCheckedState(bitMask))
   const dispatch = useAppDispatch()
 
   const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked = event.currentTarget.checked
     if (checked) {
-      dispatch(props.store.slice.actions.maskSet(bitMask))
+      dispatch(props.store.slice.actions.maskSet(bitMask.toPlainObject()))
     } else {
-      dispatch(props.store.slice.actions.maskClear(bitMask))
+      dispatch(props.store.slice.actions.maskClear(bitMask.toPlainObject()))
     }
   }
 

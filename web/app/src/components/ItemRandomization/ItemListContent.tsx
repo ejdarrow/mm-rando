@@ -4,7 +4,7 @@ import ItemMatrixView from './ItemMatrixView'
 import ItemQueryView from './ItemQueryView'
 import Slider from '../common/Slider'
 import { RootState } from '../../store/store'
-import { ItemListStore } from '../../store/createItemListSlice'
+import { asItemList, ItemListStore } from '../../store/createItemListSlice'
 
 enum ViewState {
   Query,
@@ -50,7 +50,7 @@ const ItemListContent = (props: ItemListContentProps) => {
         <h1 className="font-semibold text-2xl pl-2">{props.title}</h1>
       </div>
       <div className="flex justify-center p-3">
-        <ItemListTextInput selector={(state: RootState) => props.store.selector(state).toString()}/>
+        <ItemListTextInput selector={(state: RootState) => asItemList(props.store.selector(state)).toString()}/>
       </div>
       <div>{renderView()}</div>
     </>
