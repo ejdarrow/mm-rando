@@ -5,15 +5,7 @@ import {
   ItemListBits,
   ItemListBitsObject,
   asItemListBits,
-  getEmptyItemList,
-  performAllClear,
-  performAllSet,
-  performBitClear,
-  performBitSet,
-  performFromString,
-  performMaskClear,
-  performMaskSet,
-  performWithLength,
+  reduxApi,
 } from '../common/ItemList'
 
 // const transform = <T,>(state: ItemListObject, callback: (list: ItemListBits) => T) => {
@@ -24,35 +16,35 @@ import {
 export const createItemListSlice = (id: string) => createSlice({
   name: `${id}-itemList`,
   initialState: {
-    value: getEmptyItemList()
+    value: reduxApi.getEmptyItemList()
   },
   reducers: {
     allClear: state => {
-      state.value = performAllClear(state.value)
+      state.value = reduxApi.performAllClear(state.value)
     },
     allSet: state => {
-      state.value = performAllSet(state.value)
+      state.value = reduxApi.performAllSet(state.value)
     },
     bitClear: (state, action: PayloadAction<number>) => {
-      state.value = performBitClear(state.value, action.payload)
+      state.value = reduxApi.performBitClear(state.value, action.payload)
     },
     bitSet: (state, action: PayloadAction<number>) => {
-      state.value = performBitSet(state.value, action.payload)
+      state.value = reduxApi.performBitSet(state.value, action.payload)
     },
     maskClear: (state, action: PayloadAction<ItemListBitMaskObject>) => {
-      state.value = performMaskClear(state.value, action.payload)
+      state.value = reduxApi.performMaskClear(state.value, action.payload)
     },
     maskSet: (state, action: PayloadAction<ItemListBitMaskObject>) => {
-      state.value = performMaskSet(state.value, action.payload)
+      state.value = reduxApi.performMaskSet(state.value, action.payload)
     },
     fromString: (state, action: PayloadAction<{value: string; length: number;}>) => {
-      state.value = performFromString(action.payload.value, action.payload.length)
+      state.value = reduxApi.performFromString(action.payload.value, action.payload.length)
     },
     stateClear: state => {
-      state.value = getEmptyItemList()
+      state.value = reduxApi.getEmptyItemList()
     },
     withLength: (state, action: PayloadAction<number>) => {
-      state.value = performWithLength(action.payload)
+      state.value = reduxApi.performWithLength(action.payload)
     }
   }
 })

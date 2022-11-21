@@ -533,38 +533,40 @@ export const getRowCheckedState = (list: ItemListBits, repr: ItemListRepr, rowIn
 /** Get an `ItemListBits` from an `ItemListBitsObject`. */
 export const asItemListBits = (obj: ItemListBitsObject): ItemListBits => ItemListBits.fromPlainObject(obj)
 
-/** Perform an immutable operation on an `ItemListBitsObject`, returning a new instance. */
-export const reduxMutation = (list: ItemListBitsObject, reducer: (_: ItemListBits) => ItemListBits): ItemListBitsObject => {
-  const instance = ItemListBits.fromPlainObject(list)
-  const result = reducer(instance)
-  return result.toPlainObject()
+export namespace reduxApi {
+  /** Perform an immutable operation on an `ItemListBitsObject`, returning a new instance. */
+  export const reduxMutation = (list: ItemListBitsObject, reducer: (_: ItemListBits) => ItemListBits): ItemListBitsObject => {
+    const instance = ItemListBits.fromPlainObject(list)
+    const result = reducer(instance)
+    return result.toPlainObject()
+  }
+
+  /** Immutably clear all bits and return the result. */
+  export const performAllClear = (list: ItemListBitsObject): ItemListBitsObject => reduxMutation(list, x => x.setNoneImmut())
+
+  /** Immutably set all bits and return the result. */
+  export const performAllSet = (list: ItemListBitsObject): ItemListBitsObject => reduxMutation(list, x => x.setAllImmut())
+
+  /** Immutably clear a bit and return the result. */
+  export const performBitClear = (list: ItemListBitsObject, index: number): ItemListBitsObject => reduxMutation(list, x => x.clearBitImmut(index))
+
+  /** Immutably set a bit and return the result. */
+  export const performBitSet = (list: ItemListBitsObject, index: number): ItemListBitsObject => reduxMutation(list, x => x.setBitImmut(index))
+
+  /** Immutably clear using a mask and return the result. */
+  export const performMaskClear = (list: ItemListBitsObject, mask: ItemListBitMaskObject): ItemListBitsObject =>
+    reduxMutation(list, x => x.applyMaskNotImmut(ItemListBitMask.fromPlainObject(mask)))
+
+  /** Immutably set using a mask and return the result. */
+  export const performMaskSet = (list: ItemListBitsObject, mask: ItemListBitMaskObject): ItemListBitsObject =>
+    reduxMutation(list, x => x.applyMaskOrImmut(ItemListBitMask.fromPlainObject(mask)))
+
+  /** Parse `ItemListBitsObject` from a string. */
+  export const performFromString = (value: string, length: number): ItemListBitsObject => ItemListBits.fromString(value, length).toPlainObject()
+
+  /** Get an `ItemListBitsObject` with a given bits length. */
+  export const performWithLength = (length: number): ItemListBitsObject => ItemListBits.withLength(length).toPlainObject()
+
+  /** Get an empty `ItemListBitsObject`. */
+  export const getEmptyItemList = (): ItemListBitsObject => ItemListBits.empty().toPlainObject()
 }
-
-/** Immutably clear all bits and return the result. */
-export const performAllClear = (list: ItemListBitsObject): ItemListBitsObject => reduxMutation(list, x => x.setNoneImmut())
-
-/** Immutably set all bits and return the result. */
-export const performAllSet = (list: ItemListBitsObject): ItemListBitsObject => reduxMutation(list, x => x.setAllImmut())
-
-/** Immutably clear a bit and return the result. */
-export const performBitClear = (list: ItemListBitsObject, index: number): ItemListBitsObject => reduxMutation(list, x => x.clearBitImmut(index))
-
-/** Immutably set a bit and return the result. */
-export const performBitSet = (list: ItemListBitsObject, index: number): ItemListBitsObject => reduxMutation(list, x => x.setBitImmut(index))
-
-/** Immutably clear using a mask and return the result. */
-export const performMaskClear = (list: ItemListBitsObject, mask: ItemListBitMaskObject): ItemListBitsObject =>
-  reduxMutation(list, x => x.applyMaskNotImmut(ItemListBitMask.fromPlainObject(mask)))
-
-/** Immutably set using a mask and return the result. */
-export const performMaskSet = (list: ItemListBitsObject, mask: ItemListBitMaskObject): ItemListBitsObject =>
-  reduxMutation(list, x => x.applyMaskOrImmut(ItemListBitMask.fromPlainObject(mask)))
-
-/** Parse `ItemListBitsObject` from a string. */
-export const performFromString = (value: string, length: number): ItemListBitsObject => ItemListBits.fromString(value, length).toPlainObject()
-
-/** Get an `ItemListBitsObject` with a given bits length. */
-export const performWithLength = (length: number): ItemListBitsObject => ItemListBits.withLength(length).toPlainObject()
-
-/** Get an empty `ItemListBitsObject`. */
-export const getEmptyItemList = (): ItemListBitsObject => ItemListBits.empty().toPlainObject()
