@@ -167,19 +167,18 @@ export class ItemListBitMask extends AbstractItemListBitMask {
   }
 }
 
-const getChunkCount = (length: number) => {
-  return Math.ceil(length / 32)
+/// Calculate number of 32-bit chunks required to store bits.
+const getChunkCount = (length: number): number => {
+  return (length + 31) >>> 5
 }
 
 export class ItemListBits {
   storage: Uint32Array;
   length: number;
-  identity: ItemListBitMask;
 
   constructor(storage: Uint32Array, length: number) {
     this.storage = storage;
     this.length = length;
-    this.identity = this.createIdentityMask();
   }
 
   clone() {
@@ -238,24 +237,9 @@ export class ItemListBits {
     return clonedMask;
   }
 
-  /// Create a bit mask which represents all potential bits in storage.
-  createIdentityMask() {
-    if (this.storage.length <= 0) {
-      return ItemListBitMask.empty();
-    }
-
-    const maskChunks = new Uint32Array(this.storage.length);
-    for (let i = 0; i < maskChunks.length - 1; i++) {
-      maskChunks[i] = u32.MAX;
-    }
-    maskChunks[maskChunks.length - 1] = this.getTailChunkBitMask();
-
-    const chunkIndexes = [...Array(maskChunks.length).keys()];
-    return new ItemListBitMask(chunkIndexes, maskChunks);
-  }
-
   getCheckedStateAll() {
-    return this.getCheckedState(this.identity);
+    const identity = this.createIdentityMask();
+    return this.getCheckedState(identity);
   }
 
   /// Get the `CheckedState` for a given bit mask.
@@ -295,12 +279,12 @@ export class ItemListBits {
     return count;
   }
 
-  getTailChunkBitMask() {
-    if (this.storage.length % 32 !== 0) {
-      return u32.MAX >>> (32 - (this.length % 32));
-    } else {
-      return u32.MAX;
-    }
+  createIdentityMask(): ItemListBitMask {
+    return createIdentityMask(this.length);
+  }
+
+  createIdentityTailChunkMask(): number {
+    return createIdentityTailChunkMask(this.length);
   }
 
   clearBit(index: number) {
@@ -363,7 +347,7 @@ export class ItemListBits {
   /// Check whether the tail chunk is valid, e.g. does not contains out-of-range bits.
   isTailChunkValid() {
     if (this.storage.length > 0) {
-      const tailBitMask = this.getTailChunkBitMask();
+      const tailBitMask = this.createIdentityTailChunkMask();
       const tailChunk = this.storage[this.storage.length - 1];
       return (tailChunk & tailBitMask) >>> 0 === tailChunk;
     }
@@ -372,7 +356,7 @@ export class ItemListBits {
   /// Set all bits to 1.
   setAll() {
     if (this.storage.length > 0) {
-      const tailBitMask = this.getTailChunkBitMask();
+      const tailBitMask = this.createIdentityTailChunkMask();
       this.storage[this.storage.length - 1] = tailBitMask;
       for (let i = 0; i < this.storage.length - 1; i++) {
         this.storage[i] = u32.MAX;
@@ -449,6 +433,29 @@ export class ItemListBits {
   static withLength(length: number) {
     const chunkCount = getChunkCount(length)
     return new ItemListBits(new Uint32Array(chunkCount), length)
+  }
+}
+
+/// Create a bit mask which represents all potential bits in storage.
+export const createIdentityMask = (length: number): ItemListBitMask => {
+  const storageLength = getChunkCount(length)
+
+  const maskChunks = new Uint32Array(storageLength)
+  for (let i = 0; i < maskChunks.length - 1; i++) {
+    maskChunks[i] = u32.MAX
+  }
+  maskChunks[maskChunks.length - 1] = createIdentityTailChunkMask(length)
+
+  const chunkIndexes = [...Array(maskChunks.length).keys()]
+  return new ItemListBitMask(chunkIndexes, maskChunks)
+}
+
+/// Create a bit mask which represents all potential bits within the tail chunk.
+const createIdentityTailChunkMask = (length: number): number => {
+  if (length % 32 !== 0) {
+    return u32.MAX >>> (32 - (length % 32))
+  } else {
+    return u32.MAX
   }
 }
 
