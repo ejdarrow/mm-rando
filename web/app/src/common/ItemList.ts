@@ -399,7 +399,7 @@ export class ItemListBits {
   }
 
   static calcChunkAndShift(index: number) {
-    const chunk = Math.floor(index / 32);
+    const chunk = index >>> 5;
     const shift = index % 32;
     return tuple(chunk, shift);
   }
