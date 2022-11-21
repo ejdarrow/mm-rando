@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit'
-import itemPoolListSlice from './store/itemPoolListSlice'
-import junkLocationsListSlice from './store/junkLocationsListSlice'
+import itemPoolListSlice from './itemPoolListSlice'
+import junkLocationsListSlice from './junkLocationsListSlice'
 
 const store = configureStore({
   reducer: {

@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 import { ItemListBitMask, ItemListBits } from '../common/ItemList'
-import { RootState } from '../store'
+import { RootState } from './store'
 
 // const transform = <T,>(state: ItemListObject, callback: (list: ItemListBits) => T) => {
 //   const x = ItemListBits.fromObject(state)

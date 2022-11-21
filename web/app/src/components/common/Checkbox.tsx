@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { mergeRefs } from './common/Utility';
-import { CheckedState } from './common/CheckedState';
+import { mergeRefs } from '../../common/Utility';
+import { CheckedState } from '../../common/CheckedState';
 
 export interface CheckboxProps {
   className?: string;

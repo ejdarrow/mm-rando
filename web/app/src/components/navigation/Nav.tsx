@@ -1,5 +1,5 @@
 import React from 'react'
-import Select from './Select'
+import Select from '../common/Select'
 
 class NavItem {
   identifier: string;
@@ -22,6 +22,9 @@ class NavSection {
 }
 
 const sections = [
+  new NavSection(new NavItem('Main Settings'), [
+  new NavItem('Generation Settings'),
+  ]),
   new NavSection(new NavItem('Randomizer'), [
     new NavItem('Item Pool'),
     new NavItem('Extra Starting Items'),
@@ -107,8 +110,7 @@ const Nav = (props: NavProps) => {
     return (
       <div>
         <Select id="generator-select" label="Generator">
-          <option value="1.14.0.6 Release">1.14.0.6 Release</option>
-          <option value="1.15.0.11-beta">1.15.0.11-beta</option>
+          <option value="v1.15.0.21">v1.15.0.21</option>
         </Select>
       </div>
     )

@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import { Checkbox } from './Checkbox'
+import { Checkbox } from '../common/Checkbox'
 import { useItemListRepr } from './Randomizer'
-import Select from './Select'
-import { CheckedState } from './common/CheckedState'
-import { ItemRepr } from './common/ConfigTypes'
-import { CategoryGroup, CategoryType, ItemGroup } from './common/ItemCategory'
-import { useAppDispatch, useAppSelector } from './hooks'
-import { ItemListStore } from './store/createItemListSlice'
+import Select from '../common/Select'
+import { CheckedState } from '../../common/CheckedState'
+import { ItemRepr } from '../../common/ConfigTypes'
+import { CategoryGroup, CategoryType, ItemGroup } from '../../common/ItemCategory'
+import { useAppDispatch, useAppSelector } from '../../common/hooks'
+import { ItemListStore } from '../../store/createItemListSlice'
 
 interface CardProps {
   itemRepr: ItemRepr

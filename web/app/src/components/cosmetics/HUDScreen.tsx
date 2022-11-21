@@ -1,7 +1,7 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMoon, faSun } from '@fortawesome/free-regular-svg-icons';
-import './HUDScreen.css';
+import './styles/HUDScreen.css';
 
 const id = {
   buttonA: 'button-a',

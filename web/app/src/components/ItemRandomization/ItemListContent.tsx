@@ -2,9 +2,9 @@ import React, { useState } from 'react'
 import ItemListTextInput from './ItemListTextInput'
 import ItemMatrixView from './ItemMatrixView'
 import ItemQueryView from './ItemQueryView'
-import Slider from './Slider'
-import { RootState } from './store'
-import { ItemListStore } from './store/createItemListSlice'
+import Slider from '../common/Slider'
+import { RootState } from '../../store/store'
+import { ItemListStore } from '../../store/createItemListSlice'
 
 enum ViewState {
   Query,
