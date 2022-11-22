@@ -308,53 +308,33 @@ export class ItemListBits {
   /** Clear a bit. */
   clearBitMut(index: number) {
     const [chunk, shift] = calcChunkAndShift(index);
-    this.clearBitInternal(chunk, shift);
+    this.storage[chunk] &= ~((1 << shift) >>> 0) >>> 0;
   }
 
   /** Immutably clear a bit and return the result. */
   clearBit(index: number): ItemListBits {
-    const [chunk, shift] = calcChunkAndShift(index);
-    if (this.hasBitInternal(chunk, shift)) {
-      const clone = this.clone();
-      clone.clearBitInternal(chunk, shift);
-      return clone;
-    }
-    return this;
-  }
-
-  clearBitInternal(chunk: number, shift: number) {
-    this.storage[chunk] &= ~((1 << shift) >>> 0) >>> 0;
+    const clone = this.clone();
+    clone.clearBitMut(index);
+    return clone;
   }
 
   /** Get whether or not a bit is set. */
   hasBit(index: number): boolean {
     const [chunk, shift] = calcChunkAndShift(index);
-    return this.hasBitInternal(chunk, shift);
-  }
-
-  hasBitInternal(chunk: number, shift: number): boolean {
     return ((this.storage[chunk] >>> shift) & 1) === 1;
   }
 
   /** Set a bit. */
   setBitMut(index: number) {
     const [chunk, shift] = calcChunkAndShift(index);
-    this.setBitInternal(chunk, shift);
+    this.storage[chunk] |= (1 << shift) >>> 0;
   }
 
   /** Immutably set a bit and return the result. */
   setBit(index: number): ItemListBits {
-    const [chunk, shift] = calcChunkAndShift(index);
-    if (!this.hasBitInternal(chunk, shift)) {
-      const clone = this.clone();
-      clone.setBitInternal(chunk, shift);
-      return clone;
-    }
-    return this;
-  }
-
-  setBitInternal(chunk: number, shift: number) {
-    this.storage[chunk] |= (1 << shift) >>> 0;
+    const clone = this.clone();
+    clone.setBitMut(index);
+    return clone;
   }
 
   /** Check if the tail chunk is valid, e.g. does not contain out-of-range bits. */
