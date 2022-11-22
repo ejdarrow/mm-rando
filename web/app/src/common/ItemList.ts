@@ -1,5 +1,4 @@
 import { CheckedState } from './CheckedState';
-import { ItemListRepr } from './ConfigTypes';
 import { isHexString, tuple, u32 } from './Utility';
 
 abstract class AbstractItemListBitMask implements Iterable<[number, number]> {
