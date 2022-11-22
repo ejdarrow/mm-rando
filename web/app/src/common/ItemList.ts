@@ -460,21 +460,6 @@ const createIdentityTailChunkMask = (length: number): number => {
   }
 }
 
-export const getCellCheckedState = (list: ItemListBits, repr: ItemListRepr, colIndex: number, rowIndex: number) => {
-  const cell = repr.matrix.get(colIndex, rowIndex)
-  if (cell !== undefined && cell.items.length > 0) {
-    return list.getCheckedState(cell.bitMask)
-  }
-}
-
-export const getColumnCheckedState = (list: ItemListBits, repr: ItemListRepr, colIndex: number) => {
-  return list.getCheckedState(repr.columns[colIndex].bitMask)
-}
-
-export const getRowCheckedState = (list: ItemListBits, repr: ItemListRepr, rowIndex: number) => {
-  return list.getCheckedState(repr.rows[rowIndex].bitMask)
-}
-
 /** Get an `ItemListBits` from an `ItemListBitsObject`. */
 export const asItemListBits = (obj: ItemListBitsObject): ItemListBits => ItemListBits.fromPlainObject(obj)
 
