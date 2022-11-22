@@ -223,16 +223,6 @@ export class ItemListBits {
     return new ItemListBits(Uint32Array.from(this.storage), this.length);
   }
 
-  /** Return the resulting `ItemListBitMask` from a bitwise `AND` operation. */
-  and(bitMask: ItemListBitMask): ItemListBitMask {
-    const clonedMask = bitMask.clone();
-    for (var i = 0; i < clonedMask.length(); i++) {
-      const chunkIndex = clonedMask.chunkIndexes[i];
-      clonedMask.maskChunks[i] &= this.storage[chunkIndex];
-    }
-    return clonedMask;
-  }
-
   /** Apply a bitmask using bitwise `OR`. */
   applyOrMut(bitMask: ItemListBitMask) {
     for (let [chunkIndex, maskChunk] of bitMask) {
@@ -242,12 +232,9 @@ export class ItemListBits {
 
   /** Immutably apply a bitmask using bitwise `OR` and return the result. */
   applyOr(bitMask: ItemListBitMask): ItemListBits {
-    if (!this.and(bitMask).equals(bitMask)) {
-      const clone = this.clone();
-      clone.applyOrMut(bitMask);
-      return clone;
-    }
-    return this;
+    const clone = this.clone();
+    clone.applyOrMut(bitMask);
+    return clone;
   }
 
   /** Apply a bitmask using bitwise `AND`, `NOT`. */
@@ -259,22 +246,9 @@ export class ItemListBits {
 
   /** Immutably apply a bitmask using bitwise `AND`, `NOT` and return the result. */
   applyNot(bitMask: ItemListBitMask): ItemListBits {
-    if (!this.and(bitMask).isEmpty()) {
-      const clone = this.clone();
-      clone.applyNotMut(bitMask);
-      return clone;
-    }
-    return this;
-  }
-
-  /** Return the resulting `ItemListBitMask` from a bitwise `XOR` operation. */
-  xor(bitMask: ItemListBitMask): ItemListBitMask {
-    const clonedMask = bitMask.clone();
-    for (var i = 0; i < clonedMask.length(); i++) {
-      const chunkIndex = clonedMask.chunkIndexes[i];
-      clonedMask.maskChunks[i] ^= (this.storage[chunkIndex] & bitMask.maskChunks[i]);
-    }
-    return clonedMask;
+    const clone = this.clone();
+    clone.applyNotMut(bitMask);
+    return clone;
   }
 
   /** Get the `CheckedState` for all bits. */
