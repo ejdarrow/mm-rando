@@ -227,34 +227,34 @@ export class ItemListBits {
   }
 
   /** Apply a bitmask using bitwise `OR`. */
-  applyMaskOr(bitMask: ItemListBitMask) {
+  applyOrMut(bitMask: ItemListBitMask) {
     for (let [chunkIndex, maskChunk] of bitMask) {
       this.storage[chunkIndex] |= maskChunk;
     }
   }
 
   /** Immutably apply a bitmask using bitwise `OR` and return the result. */
-  applyMaskOrImmut(bitMask: ItemListBitMask): ItemListBits {
+  applyOr(bitMask: ItemListBitMask): ItemListBits {
     if (!this.and(bitMask).equals(bitMask)) {
       const clone = this.clone();
-      clone.applyMaskOr(bitMask);
+      clone.applyOrMut(bitMask);
       return clone;
     }
     return this;
   }
 
   /** Apply a bitmask using bitwise `AND`, `NOT`. */
-  applyMaskNot(bitMask: ItemListBitMask) {
+  applyNotMut(bitMask: ItemListBitMask) {
     for (let [chunkIndex, maskChunk] of bitMask) {
       this.storage[chunkIndex] &= ~maskChunk;
     }
   }
 
   /** Immutably apply a bitmask using bitwise `AND`, `NOT` and return the result. */
-  applyMaskNotImmut(bitMask: ItemListBitMask): ItemListBits {
+  applyNot(bitMask: ItemListBitMask): ItemListBits {
     if (!this.and(bitMask).isEmpty()) {
       const clone = this.clone();
-      clone.applyMaskNot(bitMask);
+      clone.applyNotMut(bitMask);
       return clone;
     }
     return this;
@@ -325,15 +325,15 @@ export class ItemListBits {
   }
 
   /** Clear a bit. */
-  clearBit(index: number) {
+  clearBitMut(index: number) {
     const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
     this.clearBitInternal(chunk, shift);
   }
 
   /** Immutably clear a bit and return the result. */
-  clearBitImmut(index: number): ItemListBits {
+  clearBit(index: number): ItemListBits {
     const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
-    if (this.hasBitRaw(chunk, shift)) {
+    if (this.hasBitInternal(chunk, shift)) {
       const clone = this.clone();
       clone.clearBitInternal(chunk, shift);
       return clone;
@@ -348,23 +348,23 @@ export class ItemListBits {
   /** Get whether or not a bit is set. */
   hasBit(index: number): boolean {
     const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
-    return this.hasBitRaw(chunk, shift);
+    return this.hasBitInternal(chunk, shift);
   }
 
-  hasBitRaw(chunk: number, shift: number): boolean {
+  hasBitInternal(chunk: number, shift: number): boolean {
     return ((this.storage[chunk] >>> shift) & 1) === 1;
   }
 
   /** Set a bit. */
-  setBit(index: number) {
+  setBitMut(index: number) {
     const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
-    this.storage[chunk] |= (1 << shift) >>> 0;
+    this.setBitInternal(chunk, shift);
   }
 
   /** Immutably set a bit and return the result. */
-  setBitImmut(index: number): ItemListBits {
+  setBit(index: number): ItemListBits {
     const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
-    if (!this.hasBitRaw(chunk, shift)) {
+    if (!this.hasBitInternal(chunk, shift)) {
       const clone = this.clone();
       clone.setBitInternal(chunk, shift);
       return clone;
@@ -376,15 +376,6 @@ export class ItemListBits {
     this.storage[chunk] |= (1 << shift) >>> 0;
   }
 
-  /** Either set or clear a bit. */
-  modifyBit(operation: boolean, index: number) {
-    if (operation) {
-      this.setBit(index);
-    } else {
-      this.clearBit(index);
-    }
-  }
-
   /** Check if the tail chunk is valid, e.g. does not contain out-of-range bits. */
   isTailChunkValid(): boolean {
     const tailBitMask = this.createIdentityTailChunkMask();
@@ -393,7 +384,7 @@ export class ItemListBits {
   }
 
   /** Set all bits to 1. */
-  setAll() {
+  setAllMut() {
     const tailBitMask = this.createIdentityTailChunkMask();
     this.storage[this.storage.length - 1] = tailBitMask;
     for (let i = 0; i < this.storage.length - 1; i++) {
@@ -402,23 +393,23 @@ export class ItemListBits {
   }
 
   /** Immutably set all bits to 1 and return the result. */
-  setAllImmut(): ItemListBits {
+  setAll(): ItemListBits {
     const clone = this.clone();
-    clone.setAll();
+    clone.setAllMut();
     return clone;
   }
 
   /** Set all bits to 0. */
-  setNone() {
+  setNoneMut() {
     for (let i = 0; i < this.storage.length; i++) {
       this.storage[i] = 0;
     }
   }
 
   /** Immutably set all bits to 0 and return the result. */
-  setNoneImmut(): ItemListBits {
+  setNone(): ItemListBits {
     const clone = this.clone();
-    clone.setNone();
+    clone.setNoneMut();
     return clone;
   }
 
@@ -542,24 +533,24 @@ export namespace reduxApi {
   }
 
   /** Immutably clear all bits and return the result. */
-  export const performAllClear = (list: ItemListBitsObject): ItemListBitsObject => reduxMutation(list, x => x.setNoneImmut())
+  export const performAllClear = (list: ItemListBitsObject): ItemListBitsObject => reduxMutation(list, x => x.setNone())
 
   /** Immutably set all bits and return the result. */
-  export const performAllSet = (list: ItemListBitsObject): ItemListBitsObject => reduxMutation(list, x => x.setAllImmut())
+  export const performAllSet = (list: ItemListBitsObject): ItemListBitsObject => reduxMutation(list, x => x.setAll())
 
   /** Immutably clear a bit and return the result. */
-  export const performBitClear = (list: ItemListBitsObject, index: number): ItemListBitsObject => reduxMutation(list, x => x.clearBitImmut(index))
+  export const performBitClear = (list: ItemListBitsObject, index: number): ItemListBitsObject => reduxMutation(list, x => x.clearBit(index))
 
   /** Immutably set a bit and return the result. */
-  export const performBitSet = (list: ItemListBitsObject, index: number): ItemListBitsObject => reduxMutation(list, x => x.setBitImmut(index))
+  export const performBitSet = (list: ItemListBitsObject, index: number): ItemListBitsObject => reduxMutation(list, x => x.setBit(index))
 
   /** Immutably clear using a mask and return the result. */
   export const performMaskClear = (list: ItemListBitsObject, mask: ItemListBitMaskObject): ItemListBitsObject =>
-    reduxMutation(list, x => x.applyMaskNotImmut(ItemListBitMask.fromPlainObject(mask)))
+    reduxMutation(list, x => x.applyNot(ItemListBitMask.fromPlainObject(mask)))
 
   /** Immutably set using a mask and return the result. */
   export const performMaskSet = (list: ItemListBitsObject, mask: ItemListBitMaskObject): ItemListBitsObject =>
-    reduxMutation(list, x => x.applyMaskOrImmut(ItemListBitMask.fromPlainObject(mask)))
+    reduxMutation(list, x => x.applyOr(ItemListBitMask.fromPlainObject(mask)))
 
   /** Parse `ItemListBitsObject` from a string. */
   export const performFromString = (value: string, length: number): ItemListBitsObject => ItemListBits.fromString(value, length).toPlainObject()
