@@ -191,6 +191,13 @@ export class ItemListBitMask extends AbstractItemListBitMask {
   }
 }
 
+/** Calculate the chunk index and shift index for a given bit index. */
+const calcChunkAndShift = (index: number): [number, number] => {
+  const chunk = index >>> 5;
+  const shift = index % 32;
+  return tuple(chunk, shift);
+}
+
 /** Calculate number of 32-bit chunks required to store bits. */
 const getChunkCount = (length: number): number => {
   return (length + 31) >>> 5
@@ -326,13 +333,13 @@ export class ItemListBits {
 
   /** Clear a bit. */
   clearBitMut(index: number) {
-    const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
+    const [chunk, shift] = calcChunkAndShift(index);
     this.clearBitInternal(chunk, shift);
   }
 
   /** Immutably clear a bit and return the result. */
   clearBit(index: number): ItemListBits {
-    const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
+    const [chunk, shift] = calcChunkAndShift(index);
     if (this.hasBitInternal(chunk, shift)) {
       const clone = this.clone();
       clone.clearBitInternal(chunk, shift);
@@ -347,7 +354,7 @@ export class ItemListBits {
 
   /** Get whether or not a bit is set. */
   hasBit(index: number): boolean {
-    const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
+    const [chunk, shift] = calcChunkAndShift(index);
     return this.hasBitInternal(chunk, shift);
   }
 
@@ -357,13 +364,13 @@ export class ItemListBits {
 
   /** Set a bit. */
   setBitMut(index: number) {
-    const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
+    const [chunk, shift] = calcChunkAndShift(index);
     this.setBitInternal(chunk, shift);
   }
 
   /** Immutably set a bit and return the result. */
   setBit(index: number): ItemListBits {
-    const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
+    const [chunk, shift] = calcChunkAndShift(index);
     if (!this.hasBitInternal(chunk, shift)) {
       const clone = this.clone();
       clone.setBitInternal(chunk, shift);
@@ -434,13 +441,6 @@ export class ItemListBits {
     if (this.isTailChunkValid() === false) {
       throw Error('Tail chunk contains out-of-range bits.');
     }
-  }
-
-  /** Calculate the chunk index and shift index for a given bit index. */
-  static calcChunkAndShift(index: number): [number, number] {
-    const chunk = index >>> 5;
-    const shift = index % 32;
-    return tuple(chunk, shift);
   }
 
   /** Create an empty `ItemListBits` with no chunks. */
