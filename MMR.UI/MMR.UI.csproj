@@ -5,6 +5,7 @@
     <TargetFramework>net5.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <RootNamespace>MMR.UI</RootNamespace>
     <AssemblyName>MM Randomizer</AssemblyName>
     <ApplicationIcon>200px_majoramask_rtw_icon.ico</ApplicationIcon>
