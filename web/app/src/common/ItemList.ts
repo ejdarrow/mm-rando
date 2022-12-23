@@ -128,16 +128,6 @@ export class ItemListBitMask extends AbstractItemListBitMask {
     return new ItemListBitMaskMut(Array.from(this.chunkIndexes), Array.from(this.maskChunks));
   }
 
-  /** Whether or not this bit mask contains no `1` bits. */
-  isEmpty(): boolean {
-    for (const value of this.maskChunks) {
-      if (value !== 0) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   /** Merge multiple bit masks using bitwise `OR` and return the result. */
   static bitwiseOrAll(bitMasks: ItemListBitMask[]): ItemListBitMask {
     if (bitMasks.length <= 0) {
