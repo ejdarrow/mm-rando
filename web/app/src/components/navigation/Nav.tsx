@@ -1,5 +1,6 @@
 import React from 'react'
 import Select from '../common/Select'
+import { getLocalVersions } from '../../services/PatchConfigService'
 
 class NavItem {
   identifier: string;
@@ -106,11 +107,19 @@ const Nav = (props: NavProps) => {
     )
   }
 
+  const renderVersionAsOption = (version: string) => {
+      return (
+          <option value="{version}">{version}</option>
+      )
+  }
   const renderGeneratorSelect = () => {
+      var versionsObjects;
+      getLocalVersions()
+          .then(localVersions => versionsObjects = localVersions.map(renderVersionAsOption).toString());
     return (
       <div>
         <Select id="generator-select" label="Generator">
-          <option value="v1.15.0.21">v1.15.0.21</option>
+            {versionsObjects}
         </Select>
       </div>
     )
