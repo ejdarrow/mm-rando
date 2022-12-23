@@ -9,6 +9,10 @@
 *.n64
 *.wad
 
+# JetBrains
+.idea/*
+.idea
+
 # Web Application Patch Generation Files
 */patchgenerationresults/patch*
 */ReleaseLibraries/*/
