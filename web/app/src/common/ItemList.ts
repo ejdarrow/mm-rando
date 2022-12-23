@@ -169,10 +169,7 @@ export class ItemListBitMask extends AbstractItemListBitMask {
 
     for (let i = 0; i < bitIndexes.length; i++) {
       const bitIndex = bitIndexes[i];
-
-      // TODO: Calculate chunk/shift with helper function?
-      const chunk = Math.floor(bitIndex / 32);
-      const shift = bitIndex % 32;
+      const [chunk, shift] = calcChunkAndShift(bitIndex);
 
       // Find our index which maps to the chunk to update, or otherwise insert.
       const localIndex = chunkIndexes.indexOf(chunk);
