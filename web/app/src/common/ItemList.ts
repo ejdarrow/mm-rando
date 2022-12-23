@@ -1,5 +1,4 @@
 import { CheckedState } from './CheckedState';
-import { ItemListRepr } from './ConfigTypes';
 import { isHexString, tuple, u32 } from './Utility';
 
 abstract class AbstractItemListBitMask implements Iterable<[number, number]> {
@@ -34,10 +33,12 @@ abstract class AbstractItemListBitMask implements Iterable<[number, number]> {
   }
 }
 
-/// Mutable ItemListBitMask which uses number[] for maskChunks instead of Uint32Array.
-///
-/// This type is less efficient than ItemListBitMask, but the maskChunks array length may be modified in-place.
-/// Thus it is useful for performing operations such as bitwiseOr before "completing" into less mutable state.
+/**
+ * Mutable `ItemListBitMask` which uses `number[]` for `maskChunks` instead of `Uint32Array`.
+ *
+ * This type is less efficient than `ItemListBitMask`, but the `maskChunks` array length may be modified in-place.
+ * Thus it is useful for performing operations such as bitwise `OR` before "completing" into less mutable state.
+ */
 export class ItemListBitMaskMut extends AbstractItemListBitMask {
   readonly chunkIndexes: number[];
   readonly maskChunks: number[];
@@ -60,7 +61,7 @@ export class ItemListBitMaskMut extends AbstractItemListBitMask {
     return this.chunkIndexes.length;
   };
 
-  /// Apply bitwise OR with another bit mask.
+  /** Apply bitwise `OR` with another bit mask. */
   bitwiseOr(other: AbstractItemListBitMask) {
     for (let [otherChunkIndex, otherMaskChunk] of other) {
       const localIndex = this.chunkIndexes.indexOf(otherChunkIndex);
@@ -74,7 +75,13 @@ export class ItemListBitMaskMut extends AbstractItemListBitMask {
   }
 }
 
-/// Efficient bitmask container for use with ItemListBits.
+/** Plain-object representation of `ItemListBitMask`. */
+export interface ItemListBitMaskObject {
+  chunkIndexes: number[]
+  maskChunks: number[]
+}
+
+/** Efficient bitmask container for use with `ItemListBits`. */
 export class ItemListBitMask extends AbstractItemListBitMask {
   readonly chunkIndexes: number[];
   readonly maskChunks: Uint32Array;
@@ -85,6 +92,19 @@ export class ItemListBitMask extends AbstractItemListBitMask {
     this.maskChunks = maskChunks;
   }
 
+  /** Convert from an `ItemListBitMaskObject` to an `ItemListBitMask`. */
+  static fromPlainObject(obj: ItemListBitMaskObject): ItemListBitMask {
+    return new ItemListBitMask(obj.chunkIndexes, Uint32Array.from(obj.maskChunks))
+  }
+
+  /** Convert to an `ItemListBitMaskObject`. */
+  toPlainObject(): ItemListBitMaskObject {
+    return {
+      chunkIndexes: this.chunkIndexes,
+      maskChunks: Array.from(this.maskChunks),
+    }
+  }
+
   at = (index: number) => {
     return tuple(this.chunkIndexes[index], this.maskChunks[index]);
   };
@@ -93,30 +113,23 @@ export class ItemListBitMask extends AbstractItemListBitMask {
     return this;
   };
 
-  length = () => {
+  /** Get the number of chunks. */
+  length = (): number => {
     return this.chunkIndexes.length;
   };
 
-  clone() {
+  /** Clone into a new `ItemListBitMask`. */
+  clone(): ItemListBitMask {
     return new ItemListBitMask(Array.from(this.chunkIndexes), Uint32Array.from(this.maskChunks));
   }
 
-  /// Clone to a mutable representation: `ItemListBitMaskMut`.
-  cloneToMut() {
+  /** Clone to a mutable representation: `ItemListBitMaskMut`. */
+  cloneToMut(): ItemListBitMaskMut {
     return new ItemListBitMaskMut(Array.from(this.chunkIndexes), Array.from(this.maskChunks));
   }
 
-  isEmpty() {
-    for (const value of this.maskChunks) {
-      if (value !== 0) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  /// Merge multiple bit masks using bitwise OR and return the result.
-  static bitwiseOrAll(bitMasks: ItemListBitMask[]) {
+  /** Merge multiple bit masks using bitwise `OR` and return the result. */
+  static bitwiseOrAll(bitMasks: ItemListBitMask[]): ItemListBitMask {
     if (bitMasks.length <= 0) {
       return ItemListBitMask.empty();
     } else if (bitMasks.length === 1) {
@@ -130,13 +143,13 @@ export class ItemListBitMask extends AbstractItemListBitMask {
     return result.complete();
   }
 
-  /// Create an empty bit mask.
-  static empty() {
+  /** Create an empty bit mask. */
+  static empty(): ItemListBitMask {
     return new ItemListBitMask([], new Uint32Array(0));
   }
 
-  /// Create a bit mask from bit indexes.
-  static fromBits(bitIndexes: number[]) {
+  /** Create a bit mask from bit indexes. */
+  static fromBits(bitIndexes: number[]): ItemListBitMask {
     const maskChunks = Array<number>();
     const chunkIndexes = Array<number>();
 
@@ -146,10 +159,7 @@ export class ItemListBitMask extends AbstractItemListBitMask {
 
     for (let i = 0; i < bitIndexes.length; i++) {
       const bitIndex = bitIndexes[i];
-
-      // TODO: Calculate chunk/shift with helper function?
-      const chunk = Math.floor(bitIndex / 32);
-      const shift = bitIndex % 32;
+      const [chunk, shift] = calcChunkAndShift(bitIndex);
 
       // Find our index which maps to the chunk to update, or otherwise insert.
       const localIndex = chunkIndexes.indexOf(chunk);
@@ -167,99 +177,74 @@ export class ItemListBitMask extends AbstractItemListBitMask {
   }
 }
 
-const getChunkCount = (length: number) => {
-  return Math.ceil(length / 32)
+/** Calculate the chunk index and shift index for a given bit index. */
+const calcChunkAndShift = (index: number): [number, number] => {
+  const chunk = index >>> 5;
+  const shift = index % 32;
+  return tuple(chunk, shift);
+}
+
+/** Calculate number of 32-bit chunks required to store bits. */
+const getChunkCount = (length: number): number => {
+  return (length + 31) >>> 5
+}
+
+/** Plain-object representation of `ItemListBits`. */
+export interface ItemListBitsObject {
+  storage: number[]
+  length: number
 }
 
 export class ItemListBits {
   storage: Uint32Array;
   length: number;
-  identity: ItemListBitMask;
 
   constructor(storage: Uint32Array, length: number) {
     this.storage = storage;
     this.length = length;
-    this.identity = this.createIdentityMask();
   }
 
-  clone() {
+  /** Clone into a new `ItemListBits`. */
+  clone(): ItemListBits {
     return new ItemListBits(Uint32Array.from(this.storage), this.length);
   }
 
-  /// Return the resulting `ItemListBitMask` from an AND operation.
-  and(bitMask: ItemListBitMask) {
-    const clonedMask = bitMask.clone();
-    for (var i = 0; i < clonedMask.length(); i++) {
-      const chunkIndex = clonedMask.chunkIndexes[i];
-      clonedMask.maskChunks[i] &= this.storage[chunkIndex];
-    }
-    return clonedMask;
-  }
-
-  /// Apply a bit mask using bitwise OR.
-  applyMaskOr(bitMask: ItemListBitMask) {
+  /** Apply a bitmask using bitwise `OR`. */
+  applyOrMut(bitMask: ItemListBitMask) {
     for (let [chunkIndex, maskChunk] of bitMask) {
       this.storage[chunkIndex] |= maskChunk;
     }
   }
 
-  applyMaskOrImmut(bitMask: ItemListBitMask) {
-    if (!this.and(bitMask).equals(bitMask)) {
-      const clone = this.clone();
-      clone.applyMaskOr(bitMask);
-      return clone;
-    }
-    return this;
+  /** Immutably apply a bitmask using bitwise `OR` and return the result. */
+  applyOr(bitMask: ItemListBitMask): ItemListBits {
+    const clone = this.clone();
+    clone.applyOrMut(bitMask);
+    return clone;
   }
 
-  /// Apply a bit mask using bitwise AND, NOT.
-  applyMaskNot(bitMask: ItemListBitMask) {
+  /** Apply a bitmask using bitwise `AND`, `NOT`. */
+  applyNotMut(bitMask: ItemListBitMask) {
     for (let [chunkIndex, maskChunk] of bitMask) {
       this.storage[chunkIndex] &= ~maskChunk;
     }
   }
 
-  applyMaskNotImmut(bitMask: ItemListBitMask) {
-    if (!this.and(bitMask).isEmpty()) {
-      const clone = this.clone();
-      clone.applyMaskNot(bitMask);
-      return clone;
-    }
-    return this;
+  /** Immutably apply a bitmask using bitwise `AND`, `NOT` and return the result. */
+  applyNot(bitMask: ItemListBitMask): ItemListBits {
+    const clone = this.clone();
+    clone.applyNotMut(bitMask);
+    return clone;
   }
 
-  /// Return the resulting `ItemListBitMask` from a XOR operation.
-  xor(bitMask: ItemListBitMask) {
-    const clonedMask = bitMask.clone();
-    for (var i = 0; i < clonedMask.length(); i++) {
-      const chunkIndex = clonedMask.chunkIndexes[i];
-      clonedMask.maskChunks[i] ^= (this.storage[chunkIndex] & bitMask.maskChunks[i]);
-    }
-    return clonedMask;
+  /** Get the `CheckedState` for all bits. */
+  getCheckedStateAll(): CheckedState {
+    const identity = this.createIdentityMask();
+    return this.getCheckedState(identity);
   }
 
-  /// Create a bit mask which represents all potential bits in storage.
-  createIdentityMask() {
-    if (this.storage.length <= 0) {
-      return ItemListBitMask.empty();
-    }
-
-    const maskChunks = new Uint32Array(this.storage.length);
-    for (let i = 0; i < maskChunks.length - 1; i++) {
-      maskChunks[i] = u32.MAX;
-    }
-    maskChunks[maskChunks.length - 1] = this.getTailChunkBitMask();
-
-    const chunkIndexes = [...Array(maskChunks.length).keys()];
-    return new ItemListBitMask(chunkIndexes, maskChunks);
-  }
-
-  getCheckedStateAll() {
-    return this.getCheckedState(this.identity);
-  }
-
-  /// Get the `CheckedState` for a given bit mask.
-  getCheckedState(bitMask: ItemListBitMask) {
+  /** Get the `CheckedState` for a given bitmask. */
+  getCheckedState(bitMask: ItemListBitMask): CheckedState {
     let currentState: CheckedState | undefined;
 
     for (const [chunkIndex, maskChunk] of bitMask) {
@@ -286,7 +271,8 @@ export class ItemListBits {
     return currentState === CheckedState.Checked ? currentState : CheckedState.Unchecked;
   }
 
-  getEnabledCount() {
+  /** Get the number of bits which are set. */
+  getEnabledCount(): number {
     // TODO: Optimize this?
     let count = 0;
     for (let i = 0; i < this.length; i++) {
@@ -295,111 +281,94 @@ export class ItemListBits {
     return count;
   }
 
-  getTailChunkBitMask() {
-    if (this.storage.length % 32 !== 0) {
-      return u32.MAX >>> (32 - (this.length % 32));
-    } else {
-      return u32.MAX;
-    }
+  /** Create an identity bitmask for all possible bits. */
+  createIdentityMask(): ItemListBitMask {
+    return createIdentityMask(this.length);
   }
 
-  clearBit(index: number) {
-    const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
+  /** Create an identity bitmask for the tail chunk. */
+  createIdentityTailChunkMask(): number {
+    return createIdentityTailChunkMask(this.length);
+  }
+
+  /** Clear a bit. */
+  clearBitMut(index: number) {
+    const [chunk, shift] = calcChunkAndShift(index);
     this.storage[chunk] &= ~((1 << shift) >>> 0) >>> 0;
   }
 
-  /// Clear a bit "immutably", returning a copy of the `ItemListBits`. If no change occurred, will return `this`.
-  clearBitImmut(index: number) {
-    const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
-    if (this.hasBitRaw(chunk, shift)) {
-      const clone = this.clone();
-      clone.clearBitInternal(chunk, shift);
-      return clone;
-    }
-    return this;
-  }
-
-  clearBitInternal(chunk: number, shift: number) {
-    this.storage[chunk] &= ~((1 << shift) >>> 0) >>> 0;
-  }
-
-  hasBit(index: number) {
-    const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
-    return this.hasBitRaw(chunk, shift);
-  }
-
-  hasBitRaw(chunk: number, shift: number) {
-    return ((this.storage[chunk] >>> shift) & 1) === 1;
-  }
-
-  setBit(index: number) {
-    const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
-    this.storage[chunk] |= (1 << shift) >>> 0;
-  }
-
-  /// Set a bit "immutably", returning a copy of the `ItemListBits`. If no change occurred, will return `this`.
-  setBitImmut(index: number) {
-    const [chunk, shift] = ItemListBits.calcChunkAndShift(index);
-    if (!this.hasBitRaw(chunk, shift)) {
-      const clone = this.clone();
-      clone.setBitInternal(chunk, shift);
-      return clone;
-    }
-    return this;
-  }
-
-  setBitInternal(chunk: number, shift: number) {
-    this.storage[chunk] |= (1 << shift) >>> 0;
-  }
-
-  modifyBit(operation: boolean, index: number) {
-    if (operation) {
-      this.setBit(index);
-    } else {
-      this.clearBit(index);
-    }
-  }
-
-  /// Check whether the tail chunk is valid, e.g. does not contains out-of-range bits.
-  isTailChunkValid() {
-    if (this.storage.length > 0) {
-      const tailBitMask = this.getTailChunkBitMask();
-      const tailChunk = this.storage[this.storage.length - 1];
-      return (tailChunk & tailBitMask) >>> 0 === tailChunk;
-    }
-  }
-
-  /// Set all bits to 1.
-  setAll() {
-    if (this.storage.length > 0) {
-      const tailBitMask = this.getTailChunkBitMask();
-      this.storage[this.storage.length - 1] = tailBitMask;
-      for (let i = 0; i < this.storage.length - 1; i++) {
-        this.storage[i] = u32.MAX;
-      }
-    }
-  }
-
-  setAllImmut() {
+  /** Immutably clear a bit and return the result. */
+  clearBit(index: number): ItemListBits {
     const clone = this.clone();
-    clone.setAll();
+    clone.clearBitMut(index);
     return clone;
   }
 
-  /// Set all bits to 0.
-  setNone() {
+  /** Get whether or not a bit is set. */
+  hasBit(index: number): boolean {
+    const [chunk, shift] = calcChunkAndShift(index);
+    return ((this.storage[chunk] >>> shift) & 1) === 1;
+  }
+
+  /** Set a bit. */
+  setBitMut(index: number) {
+    const [chunk, shift] = calcChunkAndShift(index);
+    this.storage[chunk] |= (1 << shift) >>> 0;
+  }
+
+  /** Immutably set a bit and return the result. */
+  setBit(index: number): ItemListBits {
+    const clone = this.clone();
+    clone.setBitMut(index);
+    return clone;
+  }
+
+  /** Check if the tail chunk is valid, e.g. does not contain out-of-range bits. */
+  isTailChunkValid(): boolean {
+    const tailBitMask = this.createIdentityTailChunkMask();
+    const tailChunk = this.storage[this.storage.length - 1];
+    return (tailChunk & tailBitMask) >>> 0 === tailChunk;
+  }
+
+  /** Set all bits to 1. */
+  setAllMut() {
+    const tailBitMask = this.createIdentityTailChunkMask();
+    this.storage[this.storage.length - 1] = tailBitMask;
+    for (let i = 0; i < this.storage.length - 1; i++) {
+      this.storage[i] = u32.MAX;
+    }
+  }
+
+  /** Immutably set all bits to 1 and return the result. */
+  setAll(): ItemListBits {
+    const clone = this.clone();
+    clone.setAllMut();
+    return clone;
+  }
+
+  /** Set all bits to 0. */
+  setNoneMut() {
     for (let i = 0; i < this.storage.length; i++) {
       this.storage[i] = 0;
     }
   }
 
-  setNoneImmut() {
+  /** Immutably set all bits to 0 and return the result. */
+  setNone(): ItemListBits {
     const clone = this.clone();
-    clone.setNone();
+    clone.setNoneMut();
     return clone;
   }
 
-  toString() {
+  /** Convert to an `ItemListBitsObject`. */
+  toPlainObject(): ItemListBitsObject {
+    return {
+      storage: Array.from(this.storage),
+      length: this.length,
+    }
+  }
+
+  toString(): string {
     const sections = Array<string>(this.storage.length);
     for (let i = 0; i < sections.length; i++) {
       sections[sections.length - i - 1] = this.storage[i] !== 0 ? this.storage[i].toString(16) : '';
@@ -407,24 +376,25 @@ export class ItemListBits {
     return sections.join('-');
   }
 
-  /// Throw an `Error` if the tail chunk is not valid.
+  /** Throw an `Error` if the tail chunk is invalid. */
   validateTailChunk() {
     if (this.isTailChunkValid() === false) {
       throw Error('Tail chunk contains out-of-range bits.');
     }
   }
 
-  static calcChunkAndShift(index: number) {
-    const chunk = Math.floor(index / 32);
-    const shift = index % 32;
-    return tuple(chunk, shift);
-  }
-
-  static empty() {
+  /** Create an empty `ItemListBits` with no chunks. */
+  static empty(): ItemListBits {
     return new ItemListBits(new Uint32Array(), 0);
   }
 
-  static fromString(str: string, length: number) {
+  /** Convert from an `ItemListBitsObject` to an `ItemListBits`. */
+  static fromPlainObject(obj: ItemListBitsObject): ItemListBits {
+    return new ItemListBits(Uint32Array.from(obj.storage), obj.length)
+  }
+
+  /** Parse an `ItemListBits` from a string. */
+  static fromString(str: string, length: number): ItemListBits {
     const sections = str.split('-');
     const chunkCount = getChunkCount(length);
     if (sections.length !== chunkCount) {
@@ -446,23 +416,73 @@ export class ItemListBits {
     return result;
   }
 
-  static withLength(length: number) {
+  /** Create an empty `ItemListBits` with a given bit count. */
+  static withLength(length: number): ItemListBits {
     const chunkCount = getChunkCount(length)
     return new ItemListBits(new Uint32Array(chunkCount), length)
   }
 }
 
-export const getCellCheckedState = (list: ItemListBits, repr: ItemListRepr, colIndex: number, rowIndex: number) => {
-  const cell = repr.matrix.get(colIndex, rowIndex)
-  if (cell !== undefined && cell.items.length > 0) {
-    return list.getCheckedState(cell.bitMask)
+/** Create a bit mask which represents all potential bits in storage. */
+export const createIdentityMask = (length: number): ItemListBitMask => {
+  const storageLength = getChunkCount(length)
+
+  const maskChunks = new Uint32Array(storageLength)
+  for (let i = 0; i < maskChunks.length - 1; i++) {
+    maskChunks[i] = u32.MAX
+  }
+  maskChunks[maskChunks.length - 1] = createIdentityTailChunkMask(length)
+
+  const chunkIndexes = [...Array(maskChunks.length).keys()]
+  return new ItemListBitMask(chunkIndexes, maskChunks)
+}
+
+/** Create a bit mask which represents all potential bits within the tail chunk. */
+const createIdentityTailChunkMask = (length: number): number => {
+  if (length % 32 !== 0) {
+    return u32.MAX >>> (32 - (length % 32))
+  } else {
+    return u32.MAX
   }
 }
 
-export const getColumnCheckedState = (list: ItemListBits, repr: ItemListRepr, colIndex: number) => {
-  return list.getCheckedState(repr.columns[colIndex].bitMask)
-}
+/** Get an `ItemListBits` from an `ItemListBitsObject`. */
+export const asItemListBits = (obj: ItemListBitsObject): ItemListBits => ItemListBits.fromPlainObject(obj)
 
-export const getRowCheckedState = (list: ItemListBits, repr: ItemListRepr, rowIndex: number) => {
-  return list.getCheckedState(repr.rows[rowIndex].bitMask)
+export namespace reduxApi {
+  /** Perform an immutable operation on an `ItemListBitsObject`, returning a new instance. */
+  export const reduxMutation = (list: ItemListBitsObject, reducer: (_: ItemListBits) => ItemListBits): ItemListBitsObject => {
+    const instance = ItemListBits.fromPlainObject(list)
+    const result = reducer(instance)
+    return result.toPlainObject()
+  }
+
+  /** Immutably clear all bits and return the result. */
+  export const performAllClear = (list: ItemListBitsObject): ItemListBitsObject => reduxMutation(list, x => x.setNone())
+
+  /** Immutably set all bits and return the result. */
+  export const performAllSet = (list: ItemListBitsObject): ItemListBitsObject => reduxMutation(list, x => x.setAll())
+
+  /** Immutably clear a bit and return the result. */
+  export const performBitClear = (list: ItemListBitsObject, index: number): ItemListBitsObject => reduxMutation(list, x => x.clearBit(index))
+
+  /** Immutably set a bit and return the result. */
+  export const performBitSet = (list: ItemListBitsObject, index: number): ItemListBitsObject => reduxMutation(list, x => x.setBit(index))
+
+  /** Immutably clear using a mask and return the result. */
+  export const performMaskClear = (list: ItemListBitsObject, mask: ItemListBitMaskObject): ItemListBitsObject =>
+    reduxMutation(list, x => x.applyNot(ItemListBitMask.fromPlainObject(mask)))
+
+  /** Immutably set using a mask and return the result. */
+  export const performMaskSet = (list: ItemListBitsObject, mask: ItemListBitMaskObject): ItemListBitsObject =>
+    reduxMutation(list, x => x.applyOr(ItemListBitMask.fromPlainObject(mask)))
+
+  /** Parse `ItemListBitsObject` from a string. */
+  export const performFromString = (value: string, length: number): ItemListBitsObject => ItemListBits.fromString(value, length).toPlainObject()
+
+  /** Get an `ItemListBitsObject` with a given bits length. */
+  export const performWithLength = (length: number): ItemListBitsObject => ItemListBits.withLength(length).toPlainObject()
+
+  /** Get an empty `ItemListBitsObject`. */
+  export const getEmptyItemList = (): ItemListBitsObject => ItemListBits.empty().toPlainObject()
 }

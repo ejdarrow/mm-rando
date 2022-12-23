@@ -4,7 +4,7 @@ import { useItemListRepr } from './Randomizer'
 import { rootStyle } from '../../common/RootStyle'
 import { ItemListBitMask } from '../../common/ItemList'
 import { useAppDispatch, useAppSelector } from '../../common/hooks'
-import { ItemListStore } from '../../store/createItemListSlice'
+import { asItemList, ItemListStore } from '../../store/createItemListSlice'
 import styles from './styles/ItemMatrixView.module.css'
 
 const dataColumnAtt = 'data-column'
@@ -21,7 +21,7 @@ const setItemPoolColumnCount = (count: number) => {
 };
 
 const ItemListCounter = (props: ItemListCounterProps) => {
-  const enabledCount = useAppSelector(state => props.store.selector(state).getEnabledCount())
+  const enabledCount = useAppSelector(state => asItemList(props.store.selector(state)).getEnabledCount())
   const itemListRepr = useItemListRepr()
   const totalCount = itemListRepr.items.length
   const enabledPercentage = ((enabledCount / totalCount) * 100).toFixed(1)
@@ -38,7 +38,7 @@ interface IdentityCheckboxProps {
 }
 
 const IdentityCheckbox = (props: IdentityCheckboxProps) => {
-  const checkedState = useAppSelector(state => props.store.selector(state).getCheckedStateAll())
+  const checkedState = useAppSelector(state => asItemList(props.store.selector(state)).getCheckedStateAll())
   const dispatch = useAppDispatch()
 
   const onClick = (event: React.MouseEvent<HTMLInputElement>) => {
@@ -59,16 +59,16 @@ interface MaskCheckboxProps {
 }
 
 const MaskCheckbox = (props: MaskCheckboxProps) => {
-  const checkedState = useAppSelector(state => props.store.selector(state).getCheckedState(props.bitMask))
+  const checkedState = useAppSelector(state => asItemList(props.store.selector(state)).getCheckedState(props.bitMask))
   const dispatch = useAppDispatch()
 
   const onClick = (event: React.MouseEvent<HTMLInputElement>) => {
     const checked = event.currentTarget.checked
     const bitMask = props.bitMask
     if (checked) {
-      dispatch(props.store.slice.actions.maskSet(bitMask))
+      dispatch(props.store.slice.actions.maskSet(bitMask.toPlainObject()))
     } else {
-      dispatch(props.store.slice.actions.maskClear(bitMask))
+      dispatch(props.store.slice.actions.maskClear(bitMask.toPlainObject()))
     }
   }
 
@@ -215,7 +215,6 @@ const ItemMatrixView = (props: ItemMatrixViewProps) => {
       </div>
     </>
   )
-  
 }
 
 export default ItemMatrixView
